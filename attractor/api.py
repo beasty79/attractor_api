@@ -10,9 +10,10 @@ from dataclasses import dataclass
 
 # internal
 from .videoWriter import VideoFileWriter
-from .simon import render_frame, to_img
+from .attractor import render_frame
 from .terminal import TerminalCounter
-from .utils import promt
+from .utils import promt, apply_color
+
 
 
 @dataclass
@@ -50,21 +51,31 @@ class ColorMap:
         return list(plt.colormaps)
 
 
-
 def _render_wrapper(args: Frame):
     h = render_frame(
         args.resolution, args.a, args.b, args.n, args.percentile,
         raw=True
     )
-    img = to_img(h, args.colors)
+    img = apply_color(h, args.colors)
 
     non_zero = np.count_nonzero(h)
     thresh = args.resolution ** 2 * 0.05
     return img, non_zero < thresh
 
+
 class Performance_Renderer:
     """This is an api wrapper class for rendering simon attractors"""
-    def __init__(self, a: float | NDArray, b: float | NDArray, colormap: "ColorMap", frames: int, fps: int = 30, n: int | list[int] = 1_000_000, resolution: int | list[int] = 1000, percentile: float | NDArray = 99) -> None:
+    def __init__(
+        self,
+        a: float | NDArray,
+        b: float | NDArray,
+        colormap: ColorMap,
+        frames: int,
+        fps: int = 30,
+        n: int | list[int] = 1_000_000,
+        resolution: int | list[int] = 1000,
+        percentile: float | NDArray = 99
+    ) -> None:
         self.a = a
         self.b = b
         self.n = n
@@ -249,7 +260,7 @@ def cosspace(lower: float, upper: float, n: int, p: float = 1.0):
     return lower + (upper - lower) * cos_wave
 
 
-def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty: bool = True, fps = 15, n=1_000_000, percentile=99, resolution=1000):
+def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty: bool = True, fps: int = 15, n=1_000_000, percentile=99, resolution=1000):
     """Generates a animation over a whole area. a, b are the axis (uses np.meshgrid)"""
     assert len(a) == len(b), "a & b dont match in length"
     A, B = np.meshgrid(a, b)

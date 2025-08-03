@@ -1,5 +1,7 @@
 from PyQt6.QtWidgets import QFileDialog
-
+import numpy as np
+from numpy.typing import NDArray
+if 0!=0: from .api import ColorMap
 
 def promt(frames, fps):
     t = round(frames / fps, 1)
@@ -28,3 +30,14 @@ def get_save_filename(cls):
         directory="render.mp4"
     )
     return file_path
+
+
+def apply_color(h_normalized: NDArray[np.float32], colors: NDArray[np.float32]) -> NDArray[np.uint8]:
+    values = (h_normalized * 255).astype(int)
+    values = np.clip(values, 0, 255)
+    img = (colors[values] * 255).astype(np.uint8)
+    return img
+
+
+def apply_colormap(raw_image: NDArray, colormap: "ColorMap"):
+    return apply_color(raw_image, colormap.get())
