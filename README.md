@@ -54,7 +54,7 @@ if __name__ == "__main__":
 This package provides tools for generating and rendering dynamic attractor visualizations using customizable color maps and performance-optimized rendering techniques.
 
 
-## Key Components
+## API
 - **render_frame**
   Core function to compute attractor frame data.
 

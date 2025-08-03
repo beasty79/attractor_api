@@ -1,4 +1,3 @@
-from PyQt6.QtWidgets import QFileDialog
 import numpy as np
 from numpy.typing import NDArray
 if 0!=0: from .api import ColorMap
@@ -20,16 +19,6 @@ def make_filename(a_1, a_2, b_1, b_2, extension="mp4"):
 
     fname = "_".join(parts) + f".{extension}"
     return fname
-
-
-def get_save_filename(cls):
-    file_path, _ = QFileDialog.getSaveFileName(
-        parent=cls,
-        caption="Save Video File",
-        filter="MP4 files (*.mp4);;All Files (*)",
-        directory="render.mp4"
-    )
-    return file_path
 
 
 def apply_color(h_normalized: NDArray[np.float32], colors: NDArray[np.float32]) -> NDArray[np.uint8]:

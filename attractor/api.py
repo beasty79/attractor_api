@@ -1,18 +1,17 @@
-from PyQt6.QtCore import pyqtBoundSignal
+from dataclasses import dataclass
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
-from typing import Any
 import multiprocessing
+from typing import Any
 from time import time
 import numpy as np
 import os
-from dataclasses import dataclass
 
 # internal
 from .videoWriter import VideoFileWriter
-from .attractor import render_frame
 from .terminal import TerminalCounter
 from .utils import promt, apply_color
+from .attractor import render_frame
 
 
 @dataclass
@@ -100,7 +99,7 @@ class Performance_Renderer:
         self.color = None
         self.counter: TerminalCounter | None = None
         self.colormap: ColorMap = colormap
-        self.hook: pyqtBoundSignal | None = None
+        self.hook: None = None
 
     def set_static(self, argument: Any, is_static: bool):
         """
@@ -110,7 +109,7 @@ class Performance_Renderer:
             raise ValueError(f"arg: {argument} is invalid, should be: ['a', 'b', 'n', 'resolution', 'percentile']")
         self.static[argument] = is_static
 
-    def addHook(self, signal: pyqtBoundSignal):
+    def addHook(self, signal):
         self.hook = signal
 
     def get_iter_value(self, arg: str) -> list[Any]:

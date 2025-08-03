@@ -1,5 +1,3 @@
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt
 import numpy as np
 import cv2
 
@@ -40,15 +38,10 @@ class VideoFileWriter:
             return
         self.writer.write(frame)
 
-    def change_cursor(self):
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-
-    def save(self, no_cursor_override=False):
+    def save(self):
         if self.writer is not None:
             self.writer.release()
-            print(f"Video saved to -> '{self.filename}'")
-            if not no_cursor_override:
-                QApplication.restoreOverrideCursor()
+            print(f"path: '{self.filename}'")
 
 def count_significant_pixels(frame: np.ndarray, threshold: int = 20, min_pixels: int = 100, verbose = False):
     # Umwandeln in Graustufen für einfacheren Vergleich
