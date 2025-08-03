@@ -46,7 +46,7 @@ def _render_wrapper(args):
 
 class Performance_Renderer:
     """This is an api wrapper class for rendering simon attractors"""
-    def __init__(self, a: int | NDArray, b: int | NDArray, colormap: "ColorMap", frames: int, fps: int = 30, n: int | list[int] = 1_000_000, resolution: int | list[int] = 1000, percentile: float | NDArray = 99) -> None:
+    def __init__(self, a: float | NDArray, b: float | NDArray, colormap: "ColorMap", frames: int, fps: int = 30, n: int | list[int] = 1_000_000, resolution: int | list[int] = 1000, percentile: float | NDArray = 99) -> None:
         self.a = a
         self.b = b
         self.n = n
