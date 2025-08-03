@@ -1,5 +1,5 @@
 [project]
-name = "attractor"
+name = "attractor-tools"
 version = "0.1.0"
 description = "An API to animate the Simon fractal"
 readme = "README.md"

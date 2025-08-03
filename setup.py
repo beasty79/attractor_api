@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='attractor',
+    name='attractor-tools',
     version='0.1.0',
-    author='Your Name',
+    author='Silas Schimpeler',
     author_email='silasfelix2005@gmail.com',
     description='animate simon attractors',
     long_description=open('README.md').read(),
