@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='attractor-tools',
-    version='0.1.1',
+    version='0.1.2',
     author='Silas Schimpeler',
     author_email='silasfelix2005@gmail.com',
     description='animate simon attractors',

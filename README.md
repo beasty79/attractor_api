@@ -24,26 +24,33 @@ pip install -e .
 from attractor import sinspace, Performance_Renderer, ColorMap
 
 def main():
-    # Create an array of values following a sinewave (period = 1)
-    # works jsut the same as np.linspace(start, end, n)
-    # similar function are cosspace, bpmspace
-    a = sinspace(0, 1, 100)
+    # array with values from lower to upper using a sinewave (p=1)
+    # a, b are the initial values of the system used in the attractor
+    # To animate this effectively, at least one of these parameters should change each frame
+    a = sinspace(0.32, 0.38, 100)
 
-    # Initialize the main renderer
+    # Main rendering class
+    # Use this when rendering a video with multiple frames.
+    # For single-frame rendering, this class is overkill — use 'render_frame(...)' instead.
     renderer = Performance_Renderer(
         a=a,
         b=1.5,
         colormap=ColorMap("viridis"),
         frames=len(a),
+        fps=10
     )
 
-    # Important: mark 'a' as non-static (varies per frame)
+    # Important: 'a' is an array of values, one per frame (a[i] used for frame i)
+    # So we need to mark it as non-static to allow per-frame variation
     renderer.set_static("a", False)
 
-    # Start rendering to a video file using 4 threads
-    renderer.start_render_process("./your_file_path/your_filename.mp4", threads=4, chunksize=4)
+    # Set how many processes/threads to use (via multiprocessing.Pool)
+    # Use None for unlimited; here we use 4 threads with a chunk size of 4
+    renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
 
 if __name__ == "__main__":
+    # see all colormaps available
+    print(ColorMap.colormaps())
     main()
 ```
 

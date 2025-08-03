@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import os
 
 class VideoFileWriter:
     def __init__(self, filename: str, fps: int = 30):
@@ -41,7 +42,7 @@ class VideoFileWriter:
     def save(self):
         if self.writer is not None:
             self.writer.release()
-            print(f"path: '{self.filename}'")
+            print(f"save to => '{os.path.abspath(self.filename)}'")
 
 def count_significant_pixels(frame: np.ndarray, threshold: int = 20, min_pixels: int = 100, verbose = False):
     # Umwandeln in Graustufen für einfacheren Vergleich

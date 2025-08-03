@@ -156,13 +156,8 @@ class Performance_Renderer:
         if not bypass_confirm:
             promt(self.frames, self.fps)
 
-        # prepare path
-        if "/" not in fname and "\\" not in fname:
-            fname = f"./render/{fname}"
-
-        if ".mp4" not in fname:
-            fname = f"{fname}.mp4"
-        print(fname)
+        if not fname.lower().endswith('.mp4'):
+            fname += '.mp4'
 
         # File Writer
         self.writer = VideoFileWriter(
