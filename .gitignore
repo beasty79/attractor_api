@@ -1,0 +1,67 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# VS Code and other editors
+.vscode/
+.idea/
+*.swp
+
+# macOS
+.DS_Store
+
+# PyCharm
+*.iml
+
+# Testing
+.coverage
+.tox/
+.nox/
+pytest_cache/
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter and notebooks
+.ipynb_checkpoints/
+
+# Logs and caches
+*.log
+*.cache
+.cache/
+
+# Mypy, pylint, pyright, etc.
+.mypy_cache/
+.dmypy.json
+.pyre/
+.pytype/
+
+# Installer logs
+pip-log.txt
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+
+# Ignore generated videos or image frames (adjust as needed)
+*.mp4
+*.avi
+*.mov
+frames/
+output/
+
+# Local dev
+*.local
