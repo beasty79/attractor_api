@@ -1,5 +1,6 @@
 from numpy.typing import NDArray
 from numba import njit, prange
+from typing import Optional
 from functools import wraps
 # from math import sin, cos
 # from math import sin, cos
@@ -37,6 +38,50 @@ def iterate(a: float, b: float, n: int) -> tuple[ndarray, ndarray]:
     return arr_x, arr_y
 
 
+def render_frame(
+    resolution: int,
+    a: float,
+    b: float,
+    n: int,
+    percentile: float,
+    colors: Optional[NDArray[np.float32]] = None,
+    raw: bool = True
+) -> NDArray:
+    """
+    Computes the Simon Attractor and returns either a normalized histogram or a color-mapped image.
+
+    Args:
+        resolution (int): Resolution of the output grid (res x res). Runtime ~ O(n^2).
+        a (float): Parameter 'a' for the Simon Attractor.
+        b (float): Parameter 'b' for the Simon Attractor.
+        n (int): Number of iterations. Higher values yield smoother output; usually n > 1_000_000.
+        percentile (float): Clipping percentile for histogram normalization (e.g., 95-99.9).
+        colors (NDArray[np.float32] | None): Colormap values in range [0, 1]. Required if raw is False.
+        raw (bool): If True, returns raw normalized histogram. If False, returns color-mapped image.
+
+    Returns:
+        NDArray[np.float32] if raw=True, otherwise NDArray[np.uint8] (RGB image).
+    """
+    x_raw, y_raw = iterate(a, b, n)
+    histogram, _, _ = np.histogram2d(x_raw, y_raw, bins=resolution)
+
+    clip_max = np.percentile(histogram, percentile)
+    if clip_max == 0 or np.isnan(clip_max):
+        clip_max = 1.0
+
+    h_normalized = np.clip(histogram / clip_max, 0, 1).astype(np.float32)
+
+    if raw:
+        return h_normalized
+
+    if colors is None:
+        raise ValueError("`colors` must be provided when raw=False.")
+
+    values = (h_normalized * 255).astype(int)
+    img = (colors[values] * 255).astype(np.uint8)
+    return img
+
+
 def render(colors: np.typing.NDArray[np.float32], resolution: int, a: float, b: float, n: int, percentile: float):
     """This Calcultes the image using a, b be the inital value for the iterations the Simon Attractor
 
@@ -65,7 +110,7 @@ def render(colors: np.typing.NDArray[np.float32], resolution: int, a: float, b: 
     return img
 
 
-def render_raw(resolution: int, a: float, b: float, n: int, percentile: float, current_percentile_max: int = 0) -> tuple[NDArray[np.float32], Any]:
+def render_raw(resolution: int, a: float, b: float, n: int, percentile: float) -> NDArray[np.float32]:
     """
     same as render but it doesnt apply the colormaps yet
     Computes a normalized 2D histogram of the Simon Attractor iterations.
@@ -83,12 +128,11 @@ def render_raw(resolution: int, a: float, b: float, n: int, percentile: float, c
     histogram, _, _ = np.histogram2d(x_raw, y_raw, bins=resolution)
 
     clip_max = np.percentile(histogram, percentile)
-    clip_max = clip_max if clip_max > current_percentile_max else current_percentile_max
     if clip_max == 0 or np.isnan(clip_max):
         clip_max = 1.0
     h_normalized = histogram / clip_max
     h_normalized = np.clip(h_normalized, 0, 1)
-    return h_normalized.astype(np.float32), clip_max
+    return h_normalized.astype(np.float32)
 
 
 def to_img(h_normalized: NDArray[np.float32], colors: NDArray[np.float32]) -> NDArray[np.uint8]:
@@ -96,82 +140,3 @@ def to_img(h_normalized: NDArray[np.float32], colors: NDArray[np.float32]) -> ND
     values = np.clip(values, 0, 255)
     img = (colors[values] * 255).astype(np.uint8)
     return img
-
-
-
-@njit(parallel=True)
-def parallel_iterate(a_list, b_list, n):
-    num_frames = len(a_list)
-    # Pre-allocate output arrays
-    x_all = np.zeros((num_frames, n), dtype=np.float64)
-    y_all = np.zeros((num_frames, n), dtype=np.float64)
-
-    for i in prange(num_frames):
-        x_raw, y_raw = iterate(a_list[i], b_list[i], n)
-        x_all[i, :] = x_raw
-        y_all[i, :] = y_raw
-    return x_all, y_all
-
-
-def render_parallel(colors: NDArray[np.float32], resolution: int, a_list: NDArray, b_list: NDArray, n: int, percentile: float) -> NDArray[np.uint8]:
-    """
-    Parallel rendering of multiple Simon Attractor frames for lists of (a, b) parameters.
-
-    Args:
-        colors (npt.NDArray[np.float32]): colormap values in range [0;1]
-        resolution (int): output image resolution (res x res)
-        a_list (List[float]): list of 'a' initial values
-        b_list (List[float]): list of 'b' initial values
-        n (int): number of iterations per frame
-        percentile (float): histogram percentile for normalization
-
-    Returns:
-        npt.NDArray[np.uint8]: stacked images, shape (len(a_list), resolution, resolution, 3)
-    """
-    print(type(colors), resolution, a_list, n, percentile)
-    # Run all iterations in parallel
-    x_all, y_all = parallel_iterate(a_list, b_list, n)
-
-    images = []
-    for i in range(len(a_list)):
-        img = render(
-            colors=colors,
-            resolution=resolution,
-            a=0.0,  # dummy, won't be used since we override below
-            b=0.0,
-            n=n,
-            percentile=percentile
-        )
-
-        # Here's a minimal inline hack for now:
-        histogramm, _, _ = np.histogram2d(x_all[i], y_all[i], bins=resolution)
-        clip_max = np.percentile(histogramm, percentile)
-        if clip_max == 0 or np.isnan(clip_max):
-            clip_max = 1
-        h_normalized = histogramm / clip_max
-        h_normalized = np.clip(h_normalized, 0, 1)
-        values = (h_normalized * 255).astype(int)
-        img = (colors[values] * 255).astype(np.uint8)
-        images.append(img)
-    return np.stack(images)
-
-
-def test_render_parallel():
-    # Create a simple colormap: 256 colors, RGB, float32 in [0,1]
-    colors = np.linspace(0, 1, 256, dtype=np.float32)
-    colors = np.stack([colors, colors, colors], axis=1)  # grayscale colormap shape (256,3)
-
-    resolution = 64  # small resolution for quick test
-    a_list = np.array([0.1, 0.5, 0.9], dtype=np.float64)
-    b_list = np.array([0.2, 0.6, 1.0], dtype=np.float64)
-    n = 1000  # iterations count
-    percentile = 95.0
-
-    # Call render_parallel
-    images = render_parallel(colors, resolution, a_list, b_list, n, percentile)
-
-    # Assertions
-    assert isinstance(images, np.ndarray), "Output should be a numpy array"
-    assert images.shape == (len(a_list), resolution, resolution, 3), f"Output shape mismatch: {images.shape}"
-    assert images.dtype == np.uint8, "Output dtype should be uint8"
-    print("render_parallel test passed.")

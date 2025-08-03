@@ -1,11 +1,9 @@
-import matplotlib.pyplot as plt
-import numpy as np
 from PyQt6.QtWidgets import QFileDialog
 
 
 def promt(frames, fps):
     t = round(frames / fps, 1)
-    print(f"{frames=} {fps=} {t=:.0f}s")
+    print(f"{frames=} {fps=} video_length={t:.0f}s")
     accept = input("Enter y or yes to Continue: ")
     if accept not in ["y", "Y", "yes", "Yes", "YES"]:
         exit(0)

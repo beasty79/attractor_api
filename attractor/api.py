@@ -1,8 +1,3 @@
-from .VideoWriter import VideoFileWriter_Stream
-from .simon import render_raw, to_img
-from .counter import TerminalCounter
-from .utils import promt
-
 from PyQt6.QtCore import pyqtBoundSignal
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
@@ -11,6 +6,23 @@ import multiprocessing
 from time import time
 import numpy as np
 import os
+from dataclasses import dataclass
+
+# internal
+from .videoWriter import VideoFileWriter
+from .simon import render_frame, to_img
+from .terminal import TerminalCounter
+from .utils import promt
+
+
+@dataclass
+class Frame:
+    resolution: int
+    a: float
+    b: float
+    n: int
+    percentile: float
+    colors: np.ndarray
 
 
 class ColorMap:
@@ -33,15 +45,21 @@ class ColorMap:
     def __repr__(self) -> str:
         return f"Colormap['{self.name}', {self.inverted=}]"
 
+    @staticmethod
+    def colormaps():
+        return list(plt.colormaps)
 
-def _render_wrapper(args):
-    h, _ = render_raw(*args[:-1])
-    img = to_img(h, args[-1])
 
-    # Filter frames
+
+def _render_wrapper(args: Frame):
+    h = render_frame(
+        args.resolution, args.a, args.b, args.n, args.percentile,
+        raw=True
+    )
+    img = to_img(h, args.colors)
+
     non_zero = np.count_nonzero(h)
-    pixel: int = args[0]
-    thresh = pixel ** 2 * 0.05
+    thresh = args.resolution ** 2 * 0.05
     return img, non_zero < thresh
 
 class Performance_Renderer:
@@ -118,8 +136,14 @@ class Performance_Renderer:
         col = [self.color] * len(a)
 
         # checks and promting
-        args = list(zip(res, a, b, n, percentile, col))
         assert all(len(lst) == len(res) for lst in [a, b, n, percentile, col]), "Mismatched lengths in input lists"
+
+        # Create Frame dataclass for every frame
+        args = [
+            Frame(res[i], a[i], b[i], n[i], percentile[i], col[i])
+            for i in range(len(res))
+        ]
+
         if not bypass_confirm:
             promt(self.frames, self.fps)
 
@@ -132,7 +156,7 @@ class Performance_Renderer:
         print(fname)
 
         # File Writer
-        self.writer = VideoFileWriter_Stream(
+        self.writer = VideoFileWriter(
             filename=self.get_unique_fname(fname),
             fps=self.fps
         )
@@ -163,8 +187,10 @@ class Performance_Renderer:
                         self.writer.add_frame(img, a=a[i], b=b[i])
                     else:
                         self.writer.add_frame(img)
-        except Exception:
-            raise ValueError("use set_static('a', False) for every attribute you give as an array")
+        except Exception as e:
+            raise e
+            exit(1)
+            # raise ValueError("use set_static('a', False) for every attribute you give as an array")
 
         # Process Finished
         total = time() - tstart
