@@ -19,7 +19,7 @@ cd attractor
 pip install -e .
 ```
 
-
+## Example usage
 ```python
 from attractor import sinspace, Performance_Renderer, ColorMap
 
