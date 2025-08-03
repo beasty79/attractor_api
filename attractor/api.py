@@ -15,7 +15,6 @@ from .terminal import TerminalCounter
 from .utils import promt, apply_color
 
 
-
 @dataclass
 class Frame:
     resolution: int

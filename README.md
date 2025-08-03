@@ -46,3 +46,33 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+# Attractor Visualization API
+
+## Overview
+
+This package provides tools for generating and rendering dynamic attractor visualizations using customizable color maps and performance-optimized rendering techniques.
+
+## Key Components
+
+- **ColorMap**
+  Utility class to create and manage color maps with optional inversion.
+
+- **Performance_Renderer**
+  High-performance renderer supporting multi-threaded frame generation and video output.
+
+- **sinspace / cosspace**
+  Generate smooth sine- or cosine-shaped value sequences over a specified range.
+
+- **bpmspace**
+  Create time-based sequences synced to beats per minute (BPM) for rhythmic animations.
+
+- **map_area**
+  Batch process and render attractor animations over a grid of parameters.
+
+- **render_frame**
+  Core function to compute attractor frame data.
+
+- **apply_colormap**
+  Apply a color map to attractor data to produce a colored image.
+
