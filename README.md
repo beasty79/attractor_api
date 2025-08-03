@@ -53,13 +53,18 @@ if __name__ == "__main__":
 
 This package provides tools for generating and rendering dynamic attractor visualizations using customizable color maps and performance-optimized rendering techniques.
 
-## Key Components
 
-- **ColorMap**
-  Utility class to create and manage color maps with optional inversion.
+## Key Components
+- **render_frame**
+  Core function to compute attractor frame data.
 
 - **Performance_Renderer**
   High-performance renderer supporting multi-threaded frame generation and video output.
+
+## Utility Functions
+
+- **ColorMap**
+  Utility class to create and manage color maps with optional inversion.
 
 - **sinspace / cosspace**
   Generate smooth sine- or cosine-shaped value sequences over a specified range.
@@ -70,9 +75,5 @@ This package provides tools for generating and rendering dynamic attractor visua
 - **map_area**
   Batch process and render attractor animations over a grid of parameters.
 
-- **render_frame**
-  Core function to compute attractor frame data.
-
 - **apply_colormap**
   Apply a color map to attractor data to produce a colored image.
-
