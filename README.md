@@ -1,6 +1,6 @@
-# attractor
+# Attractor Tools
 
-**attractor** is a Python module for animating and analyzing the **Simon fractal** using efficient rendering techniques. It provides a clean API to generate frames, apply mathematical transformations, and export visualizations as videos.
+**Attractor-tools** is a Python module for animating the **Simon fractal** using efficient rendering. It provides a clean API to generate frames, assinging colormaps, and export visualizations as videos.
 
 ---
 
@@ -14,7 +14,7 @@
 Clone the repo and install in editable mode for development:
 
 ```bash
-git clone https://github.com/yourusername/attractor.git
+git clone https://github.com/beasty79/attractor_api.git
 cd attractor
 pip install -e .
 ```
