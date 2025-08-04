@@ -51,8 +51,7 @@ class ColorMap:
 
 def _render_wrapper(args: Frame):
     h = render_frame(
-        args.resolution, args.a, args.b, args.n, args.percentile,
-        raw=True
+        args.resolution, args.a, args.b, args.n, args.percentile
     )
     img = apply_color(h, args.colors)
 

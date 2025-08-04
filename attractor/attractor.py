@@ -40,8 +40,6 @@ def render_frame(
     b: float,
     n: int,
     percentile: float,
-    colors: Optional[NDArray[np.float32]] = None,
-    raw: bool = True
 ) -> NDArray:
     """
     Computes the Simon Attractor and returns either a normalized histogram or a color-mapped image.
@@ -51,28 +49,20 @@ def render_frame(
         a (float): Parameter 'a' for the Simon Attractor.
         b (float): Parameter 'b' for the Simon Attractor.
         n (int): Number of iterations. Higher values yield smoother output; usually n > 1_000_000.
-        percentile (float): Clipping percentile for histogram normalization (e.g., 95-99.9).
-        colors (NDArray[np.float32] | None): Colormap values in range [0, 1]. Required if raw is False.
-        raw (bool): If True, returns raw normalized histogram. If False, returns color-mapped image.
+        percentile (float): Clipping percentile for histogram normalization (e.g., 95-99.9). u dont see much without
 
     Returns:
         NDArray[np.float32] if raw=True, otherwise NDArray[np.uint8] (RGB image).
     """
+    # calculate
     x_raw, y_raw = iterate(a, b, n)
-    histogram, _, _ = np.histogram2d(x_raw, y_raw, bins=resolution)
+    points_per_pixel = np.histogram2d(x_raw, y_raw, bins=resolution)[0]
 
-    clip_max = np.percentile(histogram, percentile)
-    if clip_max == 0 or np.isnan(clip_max):
-        clip_max = 1.0
+    # clip outliers
+    max_value = np.percentile(points_per_pixel, percentile)
+    max_value = max_value if np.isfinite(max_value) and max_value > 0 else 1.0
+    points_per_pixel = np.clip(points_per_pixel, 0, max_value)
 
-    h_normalized = np.clip(histogram / clip_max, 0, 1).astype(np.float32)
-
-    if raw:
-        return h_normalized
-
-    if colors is None:
-        raise ValueError("`colors` must be provided when raw=False.")
-
-    values = (h_normalized * 255).astype(int)
-    img = (colors[values] * 255).astype(np.uint8)
-    return img
+    # normalize to [0,1]
+    h_normalized = (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
+    return h_normalized
