@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 import multiprocessing
@@ -12,17 +11,7 @@ from .videoWriter import VideoFileWriter
 from .terminal import TerminalCounter
 from .utils import promt, apply_color
 from .attractor import render_frame
-
-
-@dataclass
-class Frame:
-    resolution: int
-    a: float
-    b: float
-    n: int
-    percentile: float
-    colors: np.ndarray
-
+from .frame import Frame, SimonFrame, CliffordFrame
 
 class ColorMap:
     def __init__(self, name: str, inverted: bool = False) -> None:
@@ -47,17 +36,6 @@ class ColorMap:
     @staticmethod
     def colormaps():
         return list(plt.colormaps)
-
-
-def _render_wrapper(args: Frame):
-    h = render_frame(
-        args.resolution, args.a, args.b, args.n, args.percentile
-    )
-    img = apply_color(h, args.colors)
-
-    non_zero = np.count_nonzero(h)
-    thresh = args.resolution ** 2 * 0.05
-    return img, non_zero < thresh
 
 
 class Performance_Renderer:
@@ -148,9 +126,17 @@ class Performance_Renderer:
 
         # Create Frame dataclass for every frame
         args = [
-            Frame(res[i], a[i], b[i], n[i], percentile[i], col[i])
+            SimonFrame(
+                resolution=res[i],
+                percentile=percentile[i],
+                colors=col[i],
+                n=n[i],
+                a=a[i],
+                b=b[i]
+            )
             for i in range(len(res))
         ]
+        print(f"Frames ready: {len(args)}")
 
         if not bypass_confirm:
             promt(self.frames, self.fps)
@@ -173,7 +159,8 @@ class Performance_Renderer:
         # Multiproccessing
         try:
             with multiprocessing.Pool(threads) as pool:
-                for i, (img, collapsed) in enumerate(pool.imap(_render_wrapper, args, chunksize=chunksize)):
+                frame: Frame
+                for i, frame in enumerate(pool.imap(render_frame, args, chunksize=chunksize)):
 
                     # Either Signal or Terminal
                     if self.hook is not None:
@@ -182,14 +169,14 @@ class Performance_Renderer:
                         self.counter.count_up()
 
                     # filter
-                    if collapsed and skip_empty_frames:
+                    if frame.collapsed and skip_empty_frames:
                         continue
 
                     # write a, b
                     if verbose_image:
-                        self.writer.add_frame(img, a=a[i], b=b[i])
+                        self.writer.add_frame(frame.img, a=a[i], b=b[i])
                     else:
-                        self.writer.add_frame(img)
+                        self.writer.add_frame(frame.img)
         except Exception as e:
             raise e
             exit(1)

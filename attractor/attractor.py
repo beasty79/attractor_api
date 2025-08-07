@@ -1,19 +1,21 @@
 from numpy.typing import NDArray
 from typing import Optional
-from numpy import ndarray
+from numpy.typing import NDArray
 from numba import njit
 import numpy as np
 import math
+from .frame import Frame, CliffordFrame, SimonFrame
+from .api import apply_color
 
 
 @njit
-def iterate(a: float, b: float, n: int) -> tuple[ndarray, ndarray]:
+def simon(a: float, b: float, n: int) -> tuple[NDArray, NDArray]:
     """calculates the simon attractor
 
     Args:
-        a (float): _description_
-        b (float): _description_
-        n (int): _description_
+        a (float): inital point of the system
+        b (float): inital point of the system
+        n (int): iterations
 
     Returns:
         tuple[ndarray, ndarray]: arr_x, arr_y
@@ -34,7 +36,40 @@ def iterate(a: float, b: float, n: int) -> tuple[ndarray, ndarray]:
     return arr_x, arr_y
 
 
-def render_frame(
+@njit
+def clifford(a: float, b: float, c: float, d: float, n: int) -> tuple[NDArray, NDArray]:
+    x = 0.0
+    y = 0.0
+
+    arr_x = np.zeros(shape=(n,), dtype=np.float64)
+    arr_y = np.zeros(shape=(n,), dtype=np.float64)
+
+    for i in range(n):
+        x_new = math.sin(a * y) + c * math.cos(a * x)
+        y_new = math.sin(b * x) + d * math.cos(b * y)
+
+        x, y = x_new, y_new
+        arr_x[i] = x
+        arr_y[i] = y
+    return arr_x, arr_y
+
+
+def render_frame_raw(frame: Frame):
+    render_frame(frame=frame, only_raw=True)
+
+def render_frame(frame: Frame, only_raw: bool = False) -> Frame:
+    frame.render()
+    assert frame.raw is not None
+
+    # colored image
+    if not only_raw:
+        img = apply_color(frame.raw, frame.colors)
+        frame.img_ = img
+
+    return frame
+
+
+def render_simon(
     resolution: int,
     a: float,
     b: float,
@@ -42,20 +77,20 @@ def render_frame(
     percentile: float,
 ) -> NDArray:
     """
-    Computes the Simon Attractor and returns either a normalized histogram or a color-mapped image.
+    Computes the Simon Attractor and returns a normalized histogram
 
     Args:
-        resolution (int): Resolution of the output grid (res x res). Runtime ~ O(n^2).
+        resolution (int): Resolution of the output grid (res x res).
         a (float): Parameter 'a' for the Simon Attractor.
         b (float): Parameter 'b' for the Simon Attractor.
         n (int): Number of iterations. Higher values yield smoother output; usually n > 1_000_000.
-        percentile (float): Clipping percentile for histogram normalization (e.g., 95-99.9). u dont see much without
+        percentile (float): Clipping percentile for histogram normalization (e.g., 95-99.9).
 
     Returns:
-        NDArray[np.float32] if raw=True, otherwise NDArray[np.uint8] (RGB image).
+        NDArray[np.float32]
     """
     # calculate
-    x_raw, y_raw = iterate(a, b, n)
+    x_raw, y_raw = simon(a, b, n)
     points_per_pixel = np.histogram2d(x_raw, y_raw, bins=resolution)[0]
 
     # clip outliers
@@ -64,5 +99,35 @@ def render_frame(
     points_per_pixel = np.clip(points_per_pixel, 0, max_value)
 
     # normalize to [0,1]
-    h_normalized = (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
-    return h_normalized
+    normalized = (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
+    return normalized
+
+# def render(
+#     frame: Frame
+# ) -> NDArray:
+#     """
+#     Computes the Simon Attractor and returns a normalized histogram
+
+#     Args:
+#         resolution (int): Resolution of the output grid (res x res).
+#         a (float): Parameter 'a' for the Simon Attractor.
+#         b (float): Parameter 'b' for the Simon Attractor.
+#         n (int): Number of iterations. Higher values yield smoother output; usually n > 1_000_000.
+#         percentile (float): Clipping percentile for histogram normalization (e.g., 95-99.9).
+
+#     Returns:
+#         NDArray[np.float32]
+#     """
+#     # calculate
+#     frame.render()
+#     # x_raw, y_raw = frame.(*frame.init_args(), n=frame.n)
+#     points_per_pixel = np.histogram2d(x_raw, y_raw, bins=frame.resolution)[0]
+
+#     # clip outliers
+#     max_value = np.percentile(points_per_pixel, frame.percentile)
+#     max_value = max_value if np.isfinite(max_value) and max_value > 0 else 1.0
+#     points_per_pixel = np.clip(points_per_pixel, 0, max_value)
+
+#     # normalize to [0,1]
+#     normalized = (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
+#     return normalized

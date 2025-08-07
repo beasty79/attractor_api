@@ -21,8 +21,9 @@ def make_filename(a_1, a_2, b_1, b_2, extension="mp4"):
     return fname
 
 
-def apply_color(h_normalized: NDArray[np.float32], colors: NDArray[np.float32]) -> NDArray[np.uint8]:
-    values = (h_normalized * 255).astype(int)
+def apply_color(normalized: NDArray[np.floating], colors: NDArray[np.uint8]) -> NDArray[np.uint8]:
+    assert np.max(normalized) <= 1, "normalize should be [0, 1]"
+    values = (normalized * 255).astype(int)
     values = np.clip(values, 0, 255)
     img = (colors[values] * 255).astype(np.uint8)
     return img
