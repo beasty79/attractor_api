@@ -7,11 +7,11 @@ import numpy as np
 import os
 
 # internal
-from .videoWriter import VideoFileWriter
+from .VideoWriter import VideoFileWriter
 from .terminal import TerminalCounter
-from .utils import promt, apply_color
+from .utils import promt, play_video
 from .attractor import render_frame
-from .frame import Frame, SimonFrame, CliffordFrame
+from .frame import Frame, SimonFrame
 
 class ColorMap:
     def __init__(self, name: str, inverted: bool = False) -> None:
@@ -77,6 +77,7 @@ class Performance_Renderer:
         self.counter: TerminalCounter | None = None
         self.colormap: ColorMap = colormap
         self.hook: None = None
+        self._demo = False
 
     def set_static(self, argument: Any, is_static: bool):
         """
@@ -112,6 +113,41 @@ class Performance_Renderer:
             new_name = os.path.join(base_path, name_comp)
         return new_name
 
+    def show_demo(self, nth_frame: int = 10, fixed_length = False, res=750, iterations=500_000):
+        self._demo_var = nth_frame
+        if os.path.exists("./tmp.mp4"):
+            os.remove("./tmp.mp4")
+
+        # cache class vars and change them
+        fps_cache = self.fps
+        self._demo = True
+        self._demo_res = res
+        self._demo_iterations = iterations
+        self.fps = round(self.fps / self._demo_var)
+
+        # render demo video
+        self.start_render_process("./tmp.mp4", verbose_image=True, bypass_confirm=True)
+
+        play_video("./tmp.mp4", self.fps if fixed_length else 10)
+
+        # rechange variables
+        self.fps = fps_cache
+        self._demo = False
+
+    def get_frames(self, res, percentile, color, n, a, b) -> list[Frame]:
+        """Helper function"""
+        return [
+            SimonFrame(
+                resolution=res[i],
+                percentile=percentile[i],
+                colors=color[i],
+                n=n[i],
+                a=a[i],
+                b=b[i]
+            )
+            for i in range(len(res))
+        ]
+
     def start_render_process(self, fname: str, verbose_image = False, threads: int | None = 4, chunksize = 4, skip_empty_frames = True, bypass_confirm = False):
         res: list[int] = self.get_iter_value("resolution")
         a: list[int] = self.get_iter_value("a")
@@ -125,21 +161,15 @@ class Performance_Renderer:
         assert all(len(lst) == len(res) for lst in [a, b, n, percentile, col]), "Mismatched lengths in input lists"
 
         # Create Frame dataclass for every frame
-        args = [
-            SimonFrame(
-                resolution=res[i],
-                percentile=percentile[i],
-                colors=col[i],
-                n=n[i],
-                a=a[i],
-                b=b[i]
-            )
-            for i in range(len(res))
-        ]
-        print(f"Frames ready: {len(args)}")
+        if self._demo:
+            args = self.get_frames([self._demo_res] * len(n), percentile, col, [self._demo_iterations] * len(n), a, b)
+            args = args[::self._demo_var]
+        else:
+            args = self.get_frames(res, percentile, col, n, a, b)
 
         if not bypass_confirm:
-            promt(self.frames, self.fps)
+            promt(len(args), self.fps)
+        
 
         if not fname.lower().endswith('.mp4'):
             fname += '.mp4'
@@ -152,7 +182,7 @@ class Performance_Renderer:
 
         # Terminal Feedback
         tstart = time()
-        self.counter = TerminalCounter(self.frames)
+        self.counter = TerminalCounter(len(args))
         if self.hook is None:
             self.counter.start()
 
@@ -179,8 +209,6 @@ class Performance_Renderer:
                         self.writer.add_frame(frame.img)
         except Exception as e:
             raise e
-            exit(1)
-            # raise ValueError("use set_static('a', False) for every attribute you give as an array")
 
         # Process Finished
         total = time() - tstart

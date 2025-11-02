@@ -1,11 +1,10 @@
 from numpy.typing import NDArray
-from typing import Optional
 from numpy.typing import NDArray
 from numba import njit
 import numpy as np
 import math
-from .frame import Frame, CliffordFrame, SimonFrame
-from .api import apply_color
+from .frame import Frame
+from .utils import apply_color
 
 
 @njit
@@ -63,7 +62,7 @@ def render_frame(frame: Frame, only_raw: bool = False) -> Frame:
 
     # colored image
     if not only_raw:
-        img = apply_color(frame.raw, frame.colors)
+        img = apply_color(frame.raw, frame.colors) # type: ignore
         frame.img_ = img
 
     return frame

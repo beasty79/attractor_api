@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from numpy.typing import NDArray
-from typing import Optional, Iterable
-from .api import apply_color
+from typing import Optional
+from .utils import apply_color
 import numpy as np
 
 
@@ -89,10 +89,6 @@ class Frame:
         thresh = self.resolution ** 2 * 0.05
         self.collapsed = non_zero < thresh
 
-# resolution: int
-# percentile: float
-# colors: NDArray
-# n: int
 
 @dataclass
 class SimonFrame(Frame):
@@ -105,20 +101,19 @@ class SimonFrame(Frame):
         if isinstance(self.a, list) or isinstance(self.b, list):
             raise ValueError("a or b are a list, when using lists for assignment call .toFrames() first")
 
+        assert isinstance(self.n, int)
+
         x, y = simon(self.a, self.b, self.n)
         self.raw = self.scatter_to_normalized(x, y)
         super().render(only_raw=only_raw)
 
-    def set_static(self, resolution: bool, percentile: bool, colors: bool, n: bool) -> None:
-        if self.resolution:
+    # def set_static(self, resolution: bool, percentile: bool, colors: bool, n: bool) -> None:
+        # if self.resolution:
             # self.resolution = [self.resolution] * len(self)
+        # ...
 
-
-
-
-    def toFrames(self) -> list[Frame]:
-
-        return []
+    # def toFrames(self) -> list[Frame]:
+    #     return []
 
     def __len__(self) -> int:
         if isinstance(self.a, list):
@@ -134,21 +129,21 @@ class SimonFrame(Frame):
 
 
 
-@dataclass
-class CliffordFrame(Frame):
-    a: float
-    b: float
-    c: float
-    d: float
+# @dataclass
+# class CliffordFrame(Frame):
+#     a: float
+#     b: float
+#     c: float
+#     d: float
 
-    def init_args(self) -> tuple:
-        return (self.a, self.b, self.c, self.d)
+#     def init_args(self) -> tuple:
+#         return (self.a, self.b, self.c, self.d)
 
-    def render(self, only_raw = False):
-        from .attractor import clifford
+#     def render(self, only_raw = False):
+#         from .attractor import clifford
 
-        self.check_multiple()
-        x, y = clifford(self.a, self.b, self.c, self.d, self.n)
-        self.raw = self.scatter_to_normalized(x, y)
-        super().render(only_raw=only_raw)
+#         self.check_multiple()
+#         x, y = clifford(self.a, self.b, self.c, self.d, self.n)
+#         self.raw = self.scatter_to_normalized(x, y)
+#         super().render(only_raw=only_raw)
 

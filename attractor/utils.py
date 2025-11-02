@@ -1,6 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 if 0!=0: from .api import ColorMap
+import cv2
 
 def promt(frames, fps):
     t = round(frames / fps, 1)
@@ -31,3 +32,47 @@ def apply_color(normalized: NDArray[np.floating], colors: NDArray[np.uint8]) -> 
 
 def apply_colormap(raw_image: NDArray, colormap: "ColorMap"):
     return apply_color(raw_image, colormap.get())
+
+def play_video(video_path, fps=30):
+    """
+    Plays an .mp4 video in a loop using OpenCV, until 'q', 'Esc', or window close (X) is pressed.
+
+    Args:
+        video_path (str): Path to the video file.
+        fps (float): Target frames per second for display.
+    """
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        print(f"Error: Could not open video at {video_path}")
+        return
+
+    delay = 1 / fps  # Time per frame
+
+    window_name = "Video"
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+
+    while True:
+        ret, frame = cap.read()
+
+        # Restart when video ends
+        if not ret:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            continue
+
+        cv2.imshow(window_name, frame)
+
+        # Check for quit key or window close
+        key = cv2.waitKey(int(delay * 1000)) & 0xFF
+        if key in [ord('q'), 27]:  # 'q' or 'Esc'
+            break
+
+        # Detect if window is closed via 'X' button
+        if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+# Example usage:
+# play_video("example.mp4")

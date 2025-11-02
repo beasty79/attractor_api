@@ -4,7 +4,7 @@ def main():
     # array with values from lower to upper using a sinewave (p=1)
     # a, b are the initial values of the system used in the attractor
     # To animate this effectively, at least one of these parameters should change each frame
-    a = sinspace(0.32, 0.38, 100)
+    a = sinspace(0.32, 0.4, 300)
 
     # Main rendering class
     # Use this when rendering a video with multiple frames.
@@ -23,7 +23,8 @@ def main():
 
     # Set how many processes/threads to use (via multiprocessing.Pool)
     # Use None for unlimited; here we use 4 threads with a chunk size of 4
-    renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
+    renderer.show_demo()
+    # renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
 
 
 if __name__ == "__main__":
