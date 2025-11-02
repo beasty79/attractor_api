@@ -5,6 +5,7 @@ from typing import Any
 from time import time
 import numpy as np
 import os
+from typing import Optional
 
 # internal
 from .VideoWriter import VideoFileWriter
@@ -113,7 +114,13 @@ class Performance_Renderer:
             new_name = os.path.join(base_path, name_comp)
         return new_name
 
-    def show_demo(self, nth_frame: int = 10, fixed_length = False, res=750, iterations=500_000):
+    def show_demo(self, 
+                  nth_frame: int = 10, 
+                  real_time: bool = False, 
+                  resolution: int = 750, 
+                  iterations: int = 500_000,
+                  fps: Optional[int] = None
+        ):
         self._demo_var = nth_frame
         if os.path.exists("./tmp.mp4"):
             os.remove("./tmp.mp4")
@@ -121,14 +128,15 @@ class Performance_Renderer:
         # cache class vars and change them
         fps_cache = self.fps
         self._demo = True
-        self._demo_res = res
+        self._demo_res = resolution
         self._demo_iterations = iterations
         self.fps = round(self.fps / self._demo_var)
 
         # render demo video
         self.start_render_process("./tmp.mp4", verbose_image=True, bypass_confirm=True)
 
-        play_video("./tmp.mp4", self.fps if fixed_length else 10)
+        fps_ = fps if fps is not None else 10
+        play_video("./tmp.mp4", self.fps if real_time else fps_)
 
         # rechange variables
         self.fps = fps_cache
@@ -217,6 +225,19 @@ class Performance_Renderer:
         print(f"Finished render process in {min_:02d}:{sec_:02d}")
         print(f"Average: {self.frames / total:.2f} fps")
         self.writer.save()
+
+def linspace(lower: float, upper: float, n: int):
+    """
+    [equals np.linspace]
+    Parameters: 
+    - lower (float): The minimum value.
+    - upper (float): The maximum value.
+    - n (int): Number of points in the output array.
+
+    Returns:
+    - np.ndarray: An array of values from between lower and upper evenly spaced
+    """
+    return np.linspace(lower, upper, n)
 
 def bpmspace(lower: float, upper: float, n: int, bpm: int, fps: int):
     """

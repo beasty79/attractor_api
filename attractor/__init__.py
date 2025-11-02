@@ -5,7 +5,10 @@ from .api import (
     cosspace,
     bpmspace,
     map_area,
+    linspace,
 )
+
+from .frame import Frame, SimonFrame
 
 from .attractor import render_frame
 from .utils import apply_colormap
@@ -18,7 +21,10 @@ __all__ = [
     "sinspace",
     "cosspace",
     "bpmspace",
+    "linspace",
     "map_area",
     "render_frame",
     "apply_colormap",
+    "Frame",
+    "SimonFrame"
 ]

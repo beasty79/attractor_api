@@ -16,6 +16,7 @@ venv.bak/
 .vscode/
 .idea/
 *.swp
+playground.py
 
 # macOS
 .DS_Store

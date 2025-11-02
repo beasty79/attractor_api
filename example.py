@@ -21,10 +21,14 @@ def main():
     # So we need to mark it as non-static to allow per-frame variation
     renderer.set_static("a", False)
 
+    # Show a lower resolution and frames preview
+    # opens the demo via opencv and loops until u press Esc or close the window
+    renderer.show_demo()
+    
     # Set how many processes/threads to use (via multiprocessing.Pool)
     # Use None for unlimited; here we use 4 threads with a chunk size of 4
-    renderer.show_demo()
-    # renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
+    renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
+    
 
 
 if __name__ == "__main__":

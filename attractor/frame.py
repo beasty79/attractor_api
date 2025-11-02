@@ -1,8 +1,17 @@
 from dataclasses import dataclass
 from numpy.typing import NDArray
 from typing import Optional
-from .utils import apply_color
+from .utils import apply_color, show_image
 import numpy as np
+from time import time
+
+
+@dataclass
+class DeltaTime():
+    elapsedTime: float
+
+    def __repr__(self) -> str:
+        return f"{self.elapsedTime:.2f}s"
 
 
 @dataclass
@@ -21,6 +30,8 @@ class Frame:
         self.img_: Optional[NDArray] = None
         self.raw_: Optional[NDArray] = None
         self.collapsed: bool = False
+        self._t_start: float = 0
+
 
     def set_static(self, resolution: bool, percentile: bool, colors: bool, n: bool) -> None:
         return
@@ -36,8 +47,7 @@ class Frame:
         if self.raw is None:
             raise RuntimeError("Frame isn't rendered yet!")
 
-        self.check_multiple()
-        # self.colors: NDArray
+        assert self.check_multiple()
         if isinstance(self.colors, list):
             raise Exception()
         self.img_ = apply_color(self.raw, self.colors)
@@ -63,12 +73,16 @@ class Frame:
         self.raw_ = new_raw
         self.is_collapsed()
 
-    def render(self, only_raw = False):
-        self.check_multiple()
+    def render(self, only_raw = False) -> DeltaTime:
+        assert self.check_multiple()
+
+        # apply color
         if not only_raw and self.raw is not None:
             if isinstance(self.colors, list):
                 raise Exception()
             self.img = apply_color(self.raw, self.colors)
+        
+        return DeltaTime(time() - self._t_start)
 
     def scatter_to_normalized(self, x_raw, y_raw):
         points_per_pixel = np.histogram2d(x_raw, y_raw, bins=self.resolution)[0]
@@ -88,6 +102,11 @@ class Frame:
         non_zero = np.count_nonzero(self.raw)
         thresh = self.resolution ** 2 * 0.05
         self.collapsed = non_zero < thresh
+    
+    def show(self):
+        assert self.img is not None, "Render the frame before displaying it!"
+        show_image(self.img)
+
 
 
 @dataclass
@@ -95,17 +114,18 @@ class SimonFrame(Frame):
     a: float | list
     b: float | list
 
-    def render(self, only_raw = False):
+    def render(self, only_raw = False) -> DeltaTime:
         from .attractor import simon
 
         if isinstance(self.a, list) or isinstance(self.b, list):
             raise ValueError("a or b are a list, when using lists for assignment call .toFrames() first")
 
         assert isinstance(self.n, int)
+        self._t_start = time()
 
         x, y = simon(self.a, self.b, self.n)
         self.raw = self.scatter_to_normalized(x, y)
-        super().render(only_raw=only_raw)
+        return super().render(only_raw=only_raw)
 
     # def set_static(self, resolution: bool, percentile: bool, colors: bool, n: bool) -> None:
         # if self.resolution:
