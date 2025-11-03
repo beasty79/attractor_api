@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from numpy.typing import NDArray
 from typing import Optional
-from .utils import apply_color, show_image
+from .view import show_image
+from .utils import apply_color
 import numpy as np
 from time import time
 
@@ -33,9 +34,6 @@ class Frame:
         self._t_start: float = 0
 
 
-    def set_static(self, resolution: bool, percentile: bool, colors: bool, n: bool) -> None:
-        return
-
     def __len__(self) -> int:
         return -1
 
@@ -47,18 +45,11 @@ class Frame:
         if self.raw is None:
             raise RuntimeError("Frame isn't rendered yet!")
 
-        assert self.check_multiple()
         if isinstance(self.colors, list):
             raise Exception()
         self.img_ = apply_color(self.raw, self.colors)
         return self.img_
 
-    def check_multiple(self):
-        assert not isinstance(self.resolution, (list, np.ndarray))
-        assert not isinstance(self.n, (list, np.ndarray))
-        assert not isinstance(self.percentile, (list, np.ndarray))
-        assert not isinstance(self.colors[0][0], (list, np.ndarray))
-        return True
 
     @img.setter
     def img(self, value: NDArray):
@@ -74,8 +65,6 @@ class Frame:
         self.is_collapsed()
 
     def render(self, only_raw = False) -> DeltaTime:
-        assert self.check_multiple()
-
         # apply color
         if not only_raw and self.raw is not None:
             if isinstance(self.colors, list):
@@ -107,12 +96,15 @@ class Frame:
         assert self.img is not None, "Render the frame before displaying it!"
         show_image(self.img)
 
+    def add_colors(self):
+        assert self.raw is not None, "Render Frame before adding color to it"
+        self.img = apply_color(self.raw, self.colors) # type: ignore
 
 
 @dataclass
 class SimonFrame(Frame):
-    a: float | list
-    b: float | list
+    a: float
+    b: float
 
     def render(self, only_raw = False) -> DeltaTime:
         from .attractor import simon
@@ -126,14 +118,6 @@ class SimonFrame(Frame):
         x, y = simon(self.a, self.b, self.n)
         self.raw = self.scatter_to_normalized(x, y)
         return super().render(only_raw=only_raw)
-
-    # def set_static(self, resolution: bool, percentile: bool, colors: bool, n: bool) -> None:
-        # if self.resolution:
-            # self.resolution = [self.resolution] * len(self)
-        # ...
-
-    # def toFrames(self) -> list[Frame]:
-    #     return []
 
     def __len__(self) -> int:
         if isinstance(self.a, list):

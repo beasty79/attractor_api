@@ -12,8 +12,9 @@ from functools import partial
 # internal
 from .VideoWriter import VideoFileWriter
 from .terminal import TerminalCounter
-from .utils import promt, play_video
-from .attractor import render_frame
+from .utils import promt
+from .view import play_video
+from .utils import render_frame
 from .frame import Frame, SimonFrame
 
 class ColorMap:
@@ -29,6 +30,12 @@ class ColorMap:
         color_map = plt.get_cmap(cmap)
         linear = np.linspace(0, 1, 256)
         return color_map(linear)
+
+    def greyscale(self, inverted: bool = False) -> NDArray:
+        linear = np.linspace(1.0, 0.0, 256)
+        rgb = np.stack([linear, linear, linear], axis=1)
+        rgba = np.concatenate([rgb, np.ones((256, 1))], axis=1)
+        return rgba if not inverted else rgba[::-1]
 
     def get(self) -> NDArray:
         return self.color[::-1] if self.inverted else self.color
@@ -144,7 +151,7 @@ class Performance_Renderer:
         self.fps = fps_cache
         self._demo = False
 
-    def get_frames(self, res, percentile, color, n, a, b) -> list[Frame]:
+    def get_frames(self, res, percentile, color, n, a, b) -> list[SimonFrame]:
         """Helper function"""
         return [
             SimonFrame(
@@ -158,14 +165,17 @@ class Performance_Renderer:
             for i in range(len(res))
         ]
 
-    def start_render_process(self,
-                             fname: str,
-                             verbose_image: bool    = False,
-                             threads: Optional[int] = 4,
-                             chunksize: int         = 4,
-                             skip_empty_frames: bool = True,
-                             bypass_confirm: bool   = False,
-                             save_as_generic: bool  = False):
+    def start_render_process(
+            self,
+            fname: str,
+            verbose_image: bool    = False,
+            threads: Optional[int] = 4,
+            chunksize: int         = 4,
+            skip_empty_frames: bool= True,
+            bypass_confirm: bool   = False,
+            save_as_generic: bool  = False,
+            use_counter: bool      = True
+        ):
         """starts the render Process
 
         Args:
@@ -182,7 +192,12 @@ class Performance_Renderer:
         b: list[int] = self.get_iter_value("b")
         n: list[int] = self.get_iter_value("n")
         percentile: list[int] = self.get_iter_value("percentile")
-        self.color = self.colormap.get()
+        
+        if save_as_generic:
+            self.color = self.colormap.greyscale()
+        else:
+            self.color = self.colormap.get()
+
         col = [self.color] * len(a)
 
         # checks and promting
@@ -190,13 +205,13 @@ class Performance_Renderer:
 
         # Create Frame dataclass for every frame
         if self._demo:
-            args = self.get_frames([self._demo_res] * len(n), percentile, col, [self._demo_iterations] * len(n), a, b)
-            args = args[::self._demo_var]
+            frames = self.get_frames([self._demo_res] * len(n), percentile, col, [self._demo_iterations] * len(n), a, b)
+            frames = frames[::self._demo_var]
         else:
-            args = self.get_frames(res, percentile, col, n, a, b)
+            frames = self.get_frames(res, percentile, col, n, a, b)
 
         if not bypass_confirm:
-            promt(len(args), self.fps)
+            promt(len(frames), self.fps)
         
 
         if not fname.lower().endswith('.mp4'):
@@ -210,26 +225,30 @@ class Performance_Renderer:
 
         # Terminal Feedback
         tstart = time()
-        self.counter = TerminalCounter(len(args))
-        if self.hook is None:
-            self.counter.start()
+
+        if use_counter:
+            self.counter = TerminalCounter(len(frames))
+            if self.hook is None:
+                self.counter.start()
 
         # render_func = lambda frame: render_frame(frame, only_raw=save_as_generic)
 
-        func = partial(render_frame, only_raw=save_as_generic)
+        # func = render_frame if not save_as_generic else render_frame_raw
+        # func = partial(render_frame, only_raw=save_as_generic)
         # Multiproccessing
         try:
             with multiprocessing.Pool(threads) as pool:
                 frame: Frame
-                for i, frame in enumerate(pool.imap(func, args, chunksize=chunksize)):
+                for i, frame in enumerate(pool.imap(render_frame, frames, chunksize=chunksize)):
 
-                    # Either Signal or Terminal
+                    # Either emit a Signal (pyqt6 hook) or show the progress-bar in the Terminal
                     if self.hook is not None:
                         self.hook.emit(i)
                     else:
-                        self.counter.count_up()
+                        if self.counter is not None:
+                            self.counter.count_up()
 
-                    # filter
+                    # filter if frame is collapsed
                     if frame.collapsed and skip_empty_frames:
                         continue
 

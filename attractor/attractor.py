@@ -53,20 +53,6 @@ def clifford(a: float, b: float, c: float, d: float, n: int) -> tuple[NDArray, N
     return arr_x, arr_y
 
 
-def render_frame_raw(frame: Frame):
-    render_frame(frame=frame, only_raw=True)
-
-def render_frame(frame: Frame, only_raw: bool = False) -> Frame:
-    frame.render(only_raw=only_raw)
-    assert frame.raw is not None
-    # colored image
-    if not only_raw:
-        img = apply_color(frame.raw, frame.colors) # type: ignore
-        frame.img_ = img
-
-    return frame
-
-
 def render_simon(
     resolution: int,
     a: float,
@@ -99,33 +85,3 @@ def render_simon(
     # normalize to [0,1]
     normalized = (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
     return normalized
-
-# def render(
-#     frame: Frame
-# ) -> NDArray:
-#     """
-#     Computes the Simon Attractor and returns a normalized histogram
-
-#     Args:
-#         resolution (int): Resolution of the output grid (res x res).
-#         a (float): Parameter 'a' for the Simon Attractor.
-#         b (float): Parameter 'b' for the Simon Attractor.
-#         n (int): Number of iterations. Higher values yield smoother output; usually n > 1_000_000.
-#         percentile (float): Clipping percentile for histogram normalization (e.g., 95-99.9).
-
-#     Returns:
-#         NDArray[np.float32]
-#     """
-#     # calculate
-#     frame.render()
-#     # x_raw, y_raw = frame.(*frame.init_args(), n=frame.n)
-#     points_per_pixel = np.histogram2d(x_raw, y_raw, bins=frame.resolution)[0]
-
-#     # clip outliers
-#     max_value = np.percentile(points_per_pixel, frame.percentile)
-#     max_value = max_value if np.isfinite(max_value) and max_value > 0 else 1.0
-#     points_per_pixel = np.clip(points_per_pixel, 0, max_value)
-
-#     # normalize to [0,1]
-#     normalized = (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
-#     return normalized
