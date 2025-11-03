@@ -1,21 +1,29 @@
-from attractor import sinspace, Performance_Renderer, ColorMap
+from attractor import sinspace, Performance_Renderer, ColorMap, Option
 
 
 def main():
+    # Here You define the main properties of a video render    
+    opts = Option(
+        fps=10,
+        frames=100,
+        resolution=1000,
+        iterations=1_000_000,
+        colormap=ColorMap("viridis")
+    )
+
     # array with values from lower to upper using a sinewave (p=1)
     # a, b are the initial values of the system used in the attractor
-    # To animate this effectively, at least one of these parameters should change each frame
+    # To animate this, at least one of these parameters should change each frame
     a = sinspace(0.32, 0.4, 300)
 
+
+
     # Main rendering class
-    # Use this when rendering a video with multiple frames.
-    # For single-frame rendering, this class is overkill — use 'render_frame(...)' instead.
+    # Use this when rendering a video with many frames.
     renderer = Performance_Renderer(
+        opts=opts,
         a=a,
         b=1.5,
-        colormap=ColorMap("viridis"),
-        frames=len(a),
-        fps=10
     )
 
     # Important: 'a' is an array of values, one per frame (a[i] used for frame i)

@@ -4,7 +4,7 @@ import os
 
 from .colormap import ColorMap
 from .render_class import Performance_Renderer
-
+from .opts import Option
 
 def linspace(lower: float, upper: float, n: int):
     """
@@ -80,15 +80,20 @@ def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty:
 
     # A = A.ravel()
     B = B.ravel()
+    
+    opts = Option(
+        fps=fps, 
+        frames=len(A), 
+        resolution=resolution, 
+        iterations=n,
+        colormap=colormap
+    )
+
     process = Performance_Renderer(
+        opts=opts,
         a=A,
         b=B,
-        colormap=colormap,
-        frames=len(A),
-        fps=fps,
         percentile=percentile,
-        n=n,
-        resolution=resolution
     )
     process.set_static("a", False)
     process.set_static("b", False)

@@ -12,32 +12,27 @@ from .view import play_video
 from .utils import render_frame
 from .frame import Frame, SimonFrame
 from .colormap import ColorMap
+from .opts import Option
 
 
 class Performance_Renderer:
     """This is an api wrapper class for rendering simon attractors"""
     def __init__(
-        self,
-        a: float | NDArray,
-        b: float | NDArray,
-        colormap: ColorMap,
-        frames: int,
-        fps: int = 30,
-        n: int | list[int] = 1_000_000,
-        resolution: int | list[int] = 1000,
-        percentile: float | NDArray = 99
+            self,
+            opts: Option,
+            a: float | NDArray,
+            b: float | NDArray,
+            percentile: float | NDArray = 99
     ) -> None:
-        self.a = a
-        self.b = b
-        self.n = n
-        self.resolution = resolution
-        self.percentile = percentile
-        self.frames = frames
+        self.opts               = opts
+        self.percentile         = percentile
+        self.a                  = a
+        self.b                  = b
         self.value = {
             'a': a,
             'b': b,
-            'n': n,
-            'resolution': resolution,
+            'n': self.opts.iterations,
+            'resolution': opts.resolution,
             'percentile': percentile
         }
         self.static = {
@@ -47,11 +42,11 @@ class Performance_Renderer:
             'resolution': True,
             'percentile': True
         }
-        self.fps = fps
+        self.fps = opts.fps
         self.writer = None
         self.color = None
         self.counter: TerminalCounter | None = None
-        self.colormap: ColorMap = colormap
+        self.colormap: ColorMap = opts.colormap
         self.hook: None = None
         self._demo = False
 
@@ -72,7 +67,7 @@ class Performance_Renderer:
         is_static: bool = self.static[arg]
 
         if is_static:
-            return [self.value[arg]] * self.frames
+            return [self.value[arg]] * self.opts.frames
         else:
             return self.value[arg]
 
@@ -88,6 +83,17 @@ class Performance_Renderer:
             name_comp = f"{name_only}({i_}){ext}"
             new_name = os.path.join(base_path, name_comp)
         return new_name
+
+    def show_first_frame(self):
+        frame: Frame = self.frames[0]
+        frame.render()
+        frame.show()
+
+    def show_last_frame(self):
+        frame: Frame = self.frames[-1]
+        frame.render()
+        frame.show()
+        ...
 
     def show_demo(self, 
                   nth_frame: int = 10, 
@@ -117,13 +123,36 @@ class Performance_Renderer:
         self.fps = fps_cache
         self._demo = False
 
-    def get_frames(self, res, percentile, color, n, a, b) -> list[SimonFrame]:
+    def get_frames(self, res, percentile, color, n, a, b) -> list[Frame]:
         """Helper function"""
+        assert all(len(lst) == len(res) for lst in [a, b, n, percentile, color]), "Mismatched lengths in input lists"
         return [
             SimonFrame(
                 resolution=res[i],
                 percentile=percentile[i],
                 colors=color[i],
+                n=n[i],
+                a=a[i],
+                b=b[i]
+            )
+            for i in range(len(res))
+        ]
+    
+    @property
+    def frames(self) -> list[SimonFrame]:
+        """Helper function"""
+        res: list[int] = self.get_iter_value("resolution")
+        a: list[int] = self.get_iter_value("a")
+        b: list[int] = self.get_iter_value("b")
+        n: list[int] = self.get_iter_value("n")
+        percentile: list[int] = self.get_iter_value("percentile")
+
+        assert all(len(lst) == len(res) for lst in [a, b, n, percentile]), "Mismatched lengths in input lists"
+        return [
+            SimonFrame(
+                resolution=res[i],
+                percentile=percentile[i],
+                colors=self.colormap.get(), # type: ignore
                 n=n[i],
                 a=a[i],
                 b=b[i]
@@ -165,9 +194,6 @@ class Performance_Renderer:
             self.color = self.colormap.get()
 
         col = [self.color] * len(a)
-
-        # checks and promting
-        assert all(len(lst) == len(res) for lst in [a, b, n, percentile, col]), "Mismatched lengths in input lists"
 
         # Create Frame dataclass for every frame
         if self._demo:
@@ -231,5 +257,5 @@ class Performance_Renderer:
         min_ = int(total // 60)
         sec_ = int(total % 60)
         print(f"Finished render process in {min_:02d}:{sec_:02d}")
-        print(f"Average: {self.frames / total:.2f} fps")
+        print(f"Average: {self.opts.frames / total:.2f} fps")
         self.writer.save()
