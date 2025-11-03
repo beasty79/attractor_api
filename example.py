@@ -1,5 +1,6 @@
 from attractor import sinspace, Performance_Renderer, ColorMap
 
+
 def main():
     # array with values from lower to upper using a sinewave (p=1)
     # a, b are the initial values of the system used in the attractor
@@ -24,11 +25,10 @@ def main():
     # Show a lower resolution and frames preview
     # opens the demo via opencv and loops until u press Esc or close the window
     renderer.show_demo()
-    
+
     # Set how many processes/threads to use (via multiprocessing.Pool)
     # Use None for unlimited; here we use 4 threads with a chunk size of 4
-    renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
-    
+    # renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
 
 
 if __name__ == "__main__":

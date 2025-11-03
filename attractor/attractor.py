@@ -57,9 +57,8 @@ def render_frame_raw(frame: Frame):
     render_frame(frame=frame, only_raw=True)
 
 def render_frame(frame: Frame, only_raw: bool = False) -> Frame:
-    frame.render()
+    frame.render(only_raw=only_raw)
     assert frame.raw is not None
-
     # colored image
     if not only_raw:
         img = apply_color(frame.raw, frame.colors) # type: ignore

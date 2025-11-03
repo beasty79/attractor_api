@@ -6,6 +6,8 @@ from time import time
 import numpy as np
 import os
 from typing import Optional
+from functools import partial
+
 
 # internal
 from .VideoWriter import VideoFileWriter
@@ -156,7 +158,25 @@ class Performance_Renderer:
             for i in range(len(res))
         ]
 
-    def start_render_process(self, fname: str, verbose_image = False, threads: int | None = 4, chunksize = 4, skip_empty_frames = True, bypass_confirm = False):
+    def start_render_process(self,
+                             fname: str,
+                             verbose_image: bool    = False,
+                             threads: Optional[int] = 4,
+                             chunksize: int         = 4,
+                             skip_empty_frames: bool = True,
+                             bypass_confirm: bool   = False,
+                             save_as_generic: bool  = False):
+        """starts the render Process
+
+        Args:
+            fname (str): filename / filepath
+            verbose_image (bool, optional): adds a small text with the parameter per frmae. Defaults to False.
+            threads (Optional[int], optional): cpu cores to use. Defaults to 4.
+            chunksize (int, optional): the higher the chunksize the more efficient but it needs more memory. Defaults to 4.
+            skip_empty_frames (bool, optional): skips frames wheree the fractal collapses. Defaults to True.
+            bypass_confirm (bool, optional): bypass the terminal confirmation. Defaults to False.
+            save_as_generic (bool, optional): saves as grey space image so it can be loaded and colored again without the need to render it again. Defaults to False.
+        """
         res: list[int] = self.get_iter_value("resolution")
         a: list[int] = self.get_iter_value("a")
         b: list[int] = self.get_iter_value("b")
@@ -194,11 +214,14 @@ class Performance_Renderer:
         if self.hook is None:
             self.counter.start()
 
+        # render_func = lambda frame: render_frame(frame, only_raw=save_as_generic)
+
+        func = partial(render_frame, only_raw=save_as_generic)
         # Multiproccessing
         try:
             with multiprocessing.Pool(threads) as pool:
                 frame: Frame
-                for i, frame in enumerate(pool.imap(render_frame, args, chunksize=chunksize)):
+                for i, frame in enumerate(pool.imap(func, args, chunksize=chunksize)):
 
                     # Either Signal or Terminal
                     if self.hook is not None:
