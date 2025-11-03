@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-if 0 != 0: from .api import ColorMap
+if 0 != 0: from .space import ColorMap
 if 0 != 0: from .frame import Frame
 
 

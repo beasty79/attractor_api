@@ -1,51 +1,17 @@
 from numpy.typing import NDArray
-import matplotlib.pyplot as plt
+from typing import Optional
 import multiprocessing
 from typing import Any
 from time import time
-import numpy as np
 import os
-from typing import Optional
-from functools import partial
 
-
-# internal
 from .VideoWriter import VideoFileWriter
 from .terminal import TerminalCounter
 from .utils import promt
 from .view import play_video
 from .utils import render_frame
 from .frame import Frame, SimonFrame
-
-class ColorMap:
-    def __init__(self, name: str, inverted: bool = False) -> None:
-        self.name = name
-        self.color = self.get_colors_array(name)
-        self.inverted = inverted
-
-    def set_inverted(self, state: bool):
-        self.inverted = state
-
-    def get_colors_array(self, cmap: str) -> NDArray:
-        color_map = plt.get_cmap(cmap)
-        linear = np.linspace(0, 1, 256)
-        return color_map(linear)
-
-    def greyscale(self, inverted: bool = False) -> NDArray:
-        linear = np.linspace(1.0, 0.0, 256)
-        rgb = np.stack([linear, linear, linear], axis=1)
-        rgba = np.concatenate([rgb, np.ones((256, 1))], axis=1)
-        return rgba if not inverted else rgba[::-1]
-
-    def get(self) -> NDArray:
-        return self.color[::-1] if self.inverted else self.color
-
-    def __repr__(self) -> str:
-        return f"Colormap['{self.name}', {self.inverted=}]"
-
-    @staticmethod
-    def colormaps():
-        return list(plt.colormaps)
+from .colormap import ColorMap
 
 
 class Performance_Renderer:
@@ -267,91 +233,3 @@ class Performance_Renderer:
         print(f"Finished render process in {min_:02d}:{sec_:02d}")
         print(f"Average: {self.frames / total:.2f} fps")
         self.writer.save()
-
-def linspace(lower: float, upper: float, n: int):
-    """
-    [equals np.linspace]
-    Parameters: 
-    - lower (float): The minimum value.
-    - upper (float): The maximum value.
-    - n (int): Number of points in the output array.
-
-    Returns:
-    - np.ndarray: An array of values from between lower and upper evenly spaced
-    """
-    return np.linspace(lower, upper, n)
-
-def bpmspace(lower: float, upper: float, n: int, bpm: int, fps: int):
-    """
-    Parameters:
-    - lower (float): The minimum value.
-    - upper (float): The maximum value.
-    - n (int): Number of points in the output array.
-    - p (float): Number of sine periods to span across the interval.
-
-    Returns:
-    - np.ndarray: An array of values shaped by a sine wave between lower and upper.
-    """
-    total_time = n / fps
-    minutes = total_time / 60
-    periods_needed = minutes * bpm
-    return sinspace(lower, upper, n, p=periods_needed)
-
-
-def sinspace(lower: float, upper: float, n: int, p: float = 1.0):
-    """
-    Parameters:
-    - lower (float): The minimum value.
-    - upper (float): The maximum value.
-    - n (int): Number of points in the output array.
-    - p (float): Number of sine periods to span across the interval.
-
-    Returns:
-    - np.ndarray: An array of values shaped by a sine wave between lower and upper.
-    """
-    phase = np.linspace(0, 2 * np.pi * p, n)
-    sin_wave = (np.sin(phase) + 1) / 2
-    return lower + (upper - lower) * sin_wave
-
-
-def cosspace(lower: float, upper: float, n: int, p: float = 1.0):
-    """
-    Parameters:
-    - lower (float): The minimum value.
-    - upper (float): The maximum value.
-    - n (int): Number of points in the output array.
-    - p (float): Number of sine periods to span across the interval.
-
-    Returns:
-    - np.ndarray: An array of values shaped by a cos wave between lower and upper.
-    """
-    phase = np.linspace(0, 2 * np.pi * p, n)
-    cos_wave = (np.cos(phase) + 1) / 2
-    return lower + (upper - lower) * cos_wave
-
-
-def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty: bool = True, fps: int = 15, n=1_000_000, percentile=99, resolution=1000):
-    """Generates a animation over a whole area. a, b are the axis (uses np.meshgrid)"""
-    assert len(a) == len(b), "a & b dont match in length"
-    A, B = np.meshgrid(a, b)
-
-    for i in range(A.shape[0]):
-        if i % 2 == 1:
-            A[i] = A[i][::-1]
-    A = A.flatten()
-
-    # A = A.ravel()
-    B = B.ravel()
-    process = Performance_Renderer(
-        a=A,
-        b=B,
-        colormap=colormap,
-        frames=len(A),
-        fps=fps,
-        percentile=percentile,
-        n=n,
-        resolution=resolution
-    )
-    process.set_static("a", False)
-    process.set_static("b", False)
-    process.start_render_process(fname, verbose_image=True, threads=4, chunksize=8, skip_empty_frames=skip_empty)

@@ -1,4 +1,4 @@
-from .api import (
+from .space import (
     Performance_Renderer,
     ColorMap,
     sinspace,
@@ -7,22 +7,20 @@ from .api import (
     map_area,
     linspace,
 )
-
 from .frame import Frame, SimonFrame
-
 from .utils import apply_colormap
 
 __version__ = "0.1.0"
 
 __all__ = [
-    "ColorMap",
     "Performance_Renderer",
+    "apply_colormap",
+    "SimonFrame",
+    "ColorMap",
     "sinspace",
     "cosspace",
     "bpmspace",
     "linspace",
     "map_area",
-    "apply_colormap",
-    "Frame",
-    "SimonFrame"
+    "Frame"
 ]
