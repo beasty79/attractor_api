@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from .colormap import ColorMap
+from typing import Optional
 
 @dataclass
 class Option:
@@ -7,10 +8,11 @@ class Option:
     frames: int
     resolution: int
     iterations: int
-    colormap: ColorMap = ColorMap("viridis")
+    colormap: ColorMap = None # type: ignore
 
     def __post_init__(self):
         self.total_time: float = round(self.frames / self.fps, 1)
+        self.colormap = ColorMap("viridis") if self.colormap is None else self.colormap
     
     @staticmethod
     def from_time(
@@ -18,7 +20,7 @@ class Option:
           fps: int,
           iterations: int = 1_000_000,
           resolution: int = 1000,
-          colormap: ColorMap = ColorMap("viridis"),
+          colormap: ColorMap = None, # type: ignore
         ) -> "Option":
 
         return Option(

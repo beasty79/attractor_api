@@ -19,7 +19,7 @@ def linspace(lower: float, upper: float, n: int):
     """
     return np.linspace(lower, upper, n)
 
-def bpmspace(lower: float, upper: float, n: int, bpm: int, fps: int):
+def bpmspace(lower: float, upper: float, n: int, bpm: int, fps: int, absolute=True, use_trispace=False):
     """
     Parameters:
     - lower (float): The minimum value.
@@ -33,10 +33,13 @@ def bpmspace(lower: float, upper: float, n: int, bpm: int, fps: int):
     total_time = n / fps
     minutes = total_time / 60
     periods_needed = minutes * bpm
-    return sinspace(lower, upper, n, p=periods_needed)
+    if use_trispace:
+        return trispace(lower, upper, n, p=periods_needed)
+    else:
+        return sinspace(lower, upper, n, p=periods_needed, absolute=absolute)
 
 
-def sinspace(lower: float, upper: float, n: int, p: float = 1.0):
+def sinspace(lower: float, upper: float, n: int, p: float = 1.0, absolute=False):
     """
     Parameters:
     - lower (float): The minimum value.
@@ -48,11 +51,31 @@ def sinspace(lower: float, upper: float, n: int, p: float = 1.0):
     - np.ndarray: An array of values shaped by a sine wave between lower and upper.
     """
     phase = np.linspace(0, 2 * np.pi * p, n)
-    sin_wave = (np.sin(phase) + 1) / 2
+    sin_wave = np.sin(phase)
+    if absolute:
+        sin_wave = np.abs(sin_wave)
+    sin_wave = (sin_wave + 1) / 2
     return lower + (upper - lower) * sin_wave
 
 
-def cosspace(lower: float, upper: float, n: int, p: float = 1.0):
+def trispace(lower: float, upper: float, n: int, p: float = 1.0):
+    """
+    Parameters:
+    - lower (float): The minimum value.
+    - upper (float): The maximum value.
+    - n (int): Number of points in the output array.
+    - p (float): Number of triangular periods to span across the interval.
+    - absolute (bool): Whether to take the absolute value of the wave.
+
+    Returns:
+    - np.ndarray: An array of values shaped by a triangular wave between lower and upper.
+    """
+    x = np.linspace(0, p, n)  # Linear space over periods
+    tri_wave = 2 * np.abs(x % 1 - 0.5)  # Triangle wave 0..1
+    return lower + (upper - lower) * tri_wave
+
+
+def cosspace(lower: float, upper: float, n: int, p: float = 1.0, absolute=False):
     """
     Parameters:
     - lower (float): The minimum value.
@@ -65,7 +88,9 @@ def cosspace(lower: float, upper: float, n: int, p: float = 1.0):
     """
     phase = np.linspace(0, 2 * np.pi * p, n)
     cos_wave = (np.cos(phase) + 1) / 2
-    return lower + (upper - lower) * cos_wave
+    cosine = lower + (upper - lower) * cos_wave
+    return cosine if not absolute else np.abs(cosine)
+
 
 
 def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty: bool = True, fps: int = 15, n=1_000_000, percentile=99, resolution=1000):

@@ -5,6 +5,7 @@ from .view import show_image
 from .utils import apply_color
 import numpy as np
 from time import time
+from .colormap import ColorMap
 
 
 @dataclass
@@ -30,12 +31,9 @@ class Frame:
         # attributes only available after render
         self.img_: Optional[NDArray] = None
         self.raw_: Optional[NDArray] = None
+        self.points_per_pixel = None
         self.collapsed: bool = False
         self._t_start: float = 0
-
-
-    def __len__(self) -> int:
-        return -1
 
     @property
     def img(self) -> NDArray:
@@ -75,15 +73,16 @@ class Frame:
 
     def scatter_to_normalized(self, x_raw, y_raw):
         points_per_pixel = np.histogram2d(x_raw, y_raw, bins=self.resolution)[0]
+        return points_per_pixel
 
+    def normalize(self, points_per_pixel: NDArray) -> NDArray:
         # clip outliers
         max_value = np.percentile(points_per_pixel, self.percentile)
         max_value = max_value if np.isfinite(max_value) and max_value > 0 else 1.0
         points_per_pixel = np.clip(points_per_pixel, 0, max_value)
 
         # normalize to [0,1]
-        normalized = (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
-        return normalized
+        return (points_per_pixel / np.max(points_per_pixel)).astype(np.float32)
 
     def is_collapsed(self):
         assert self.raw is not None, "first render"
@@ -96,9 +95,13 @@ class Frame:
         assert self.img is not None, "Render the frame before displaying it!"
         show_image(self.img)
 
-    def add_colors(self):
+    def add_colors(self, colormap: Optional[ColorMap] = None):
         assert self.raw is not None, "Render Frame before adding color to it"
-        self.img = apply_color(self.raw, self.colors) # type: ignore
+
+        if colormap is None:
+            self.img = apply_color(self.raw, self.colors) # type: ignore
+        else:
+            self.img = apply_color(self.raw, colormap.get())
 
 
 @dataclass
@@ -116,19 +119,10 @@ class SimonFrame(Frame):
         self._t_start = time()
 
         x, y = simon(self.a, self.b, self.n)
-        self.raw = self.scatter_to_normalized(x, y)
+        self.points_per_pixel = self.scatter_to_normalized(x, y)
+        self.raw = self.normalize(self.points_per_pixel)
         return super().render(only_raw=only_raw)
 
-    def __len__(self) -> int:
-        if isinstance(self.a, list):
-            return len(self.a)
-        if isinstance(self.b, list):
-            return len(self.b)
-        if isinstance(self.n, list):
-            return len(self.n)
-        if isinstance(self.percentile, list):
-            return len(self.percentile)
-        return 1
 
 
 

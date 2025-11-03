@@ -46,7 +46,7 @@ def play_video(video_path, fps=30):
 
 def show_image(
     img: np.ndarray,
-    resolution: Optional[tuple[int, int]] = (1000, 1000)
+    resolution: Optional[tuple[int, int]] = (1000, 1000),
 ):
     """
     Zeigt ein NumPy-ndarray-Bild mit OpenCV an.
@@ -55,11 +55,13 @@ def show_image(
 
     Args:
         img (np.ndarray): Das anzuzeigende Bild.
-        window_name (str): Name des Anzeige-Fensters.
         resolution (tuple[int, int], optional): Zielauflösung (Breite, Höhe) in Pixeln.
+        rgb_to_bgr (bool): Falls True, wird das Bild von RGB nach BGR konvertiert.
     """
     if not isinstance(img, np.ndarray):
         raise TypeError("Input muss ein NumPy ndarray sein.")
+
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     # Bild auf gewünschte Auflösung skalieren
     if resolution is not None:

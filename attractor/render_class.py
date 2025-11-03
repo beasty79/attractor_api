@@ -5,7 +5,7 @@ from typing import Any
 from time import time
 import os
 
-from .VideoWriter import VideoFileWriter
+from .file_writer import VideoFileWriter
 from .terminal import TerminalCounter
 from .utils import promt
 from .view import play_video
@@ -93,7 +93,6 @@ class Performance_Renderer:
         frame: Frame = self.frames[-1]
         frame.render()
         frame.show()
-        ...
 
     def show_demo(self, 
                   nth_frame: int = 10, 

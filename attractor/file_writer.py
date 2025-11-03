@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 import os
+from PIL import Image
+
 
 class VideoFileWriter:
     def __init__(self, filename: str, fps: int = 30):
@@ -44,6 +46,7 @@ class VideoFileWriter:
             self.writer.release()
             print(f"save to => '{os.path.abspath(self.filename)}'")
 
+
 def count_significant_pixels(frame: np.ndarray, threshold: int = 20, min_pixels: int = 100, verbose = False):
     # Umwandeln in Graustufen für einfacheren Vergleich
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -57,6 +60,7 @@ def count_significant_pixels(frame: np.ndarray, threshold: int = 20, min_pixels:
         print(f"non-zero values ({threshold=}): {count} ")
     return result
 
+
 def is_mostly_uniform(frame: np.ndarray, threshold: float = 5.0, verbose = False) -> bool:
     variance = np.var(frame)
     result = bool(variance < threshold)
@@ -64,3 +68,48 @@ def is_mostly_uniform(frame: np.ndarray, threshold: float = 5.0, verbose = False
         print(f"frame variance: {round(variance)}")
     return result
 
+
+def save_grayscale_16bit(array: np.ndarray, filename: str):
+    """
+    Speichert ein Graustufenbild als 16-Bit PNG.
+
+    Parameters:
+        array (np.ndarray): NumPy Array der Form (width, height) mit Werten 0-65535
+        filename (str): Pfad zum Speicherort, z.B. 'bild.png'
+    """
+    if array.ndim != 2:
+        raise ValueError("Array muss die Form (width, height) haben")
+
+    # Sicherstellen, dass der Datentyp uint16 ist
+    if array.dtype != np.uint16:
+        array = array.astype(np.uint16)
+
+    # Bild erstellen und speichern
+    img = Image.fromarray(array, mode='I;16')
+    img.save(filename)
+
+
+def save_grayscale_32bit_int(array: np.ndarray, filename: str):
+    """
+    Speichert ein Graustufenbild als 32-Bit Integer TIFF.
+
+    Parameters:
+        array (np.ndarray): NumPy Array der Form (width, height) mit Werten als uint32
+        filename (str): Pfad zum Speicherort, z.B. 'bild.tiff'
+    """
+    if ".tiff" not in filename: 
+        filename += ".tiff"
+
+    if array.ndim != 2:
+        raise ValueError("Array muss die Form (width, height) haben")
+
+    # In int32 umwandeln (Pillow verwendet signed 32-Bit)
+    if array.dtype != np.uint32:
+        array = array.astype(np.uint32)
+    
+    # Pillow braucht int32 für 'I', also casten
+    array_signed = array.view(np.int32)
+
+    # Bild erstellen und speichern (TIFF empfohlen)
+    img = Image.fromarray(array_signed, mode='I')
+    img.save(filename)
