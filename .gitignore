@@ -38,6 +38,7 @@ dist/
 # Jupyter and notebooks
 .ipynb_checkpoints/
 
+*.png
 # Logs and caches
 *.log
 *.cache

@@ -6,6 +6,8 @@ from .utils import apply_color
 import numpy as np
 from time import time
 from .colormap import ColorMap
+import os
+from .generic import save_to_greyscale , loadpng, normalize_array, save
 
 
 @dataclass
@@ -103,6 +105,42 @@ class Frame:
         else:
             self.img = apply_color(self.raw, colormap.get())
 
+    def saveAsGeneric(self, path: str):
+        """
+        Save image as Png with 16-bit Quality
+        """
+        # TODO maybe manully render as greyscale here
+
+        assert self.img is not None, "render before saving!"
+        if ".png" not in path:
+            path += ".png"
+
+        # Path
+        i = 0
+        path_ = path.replace(".png", "")
+        while os.path.exists(f"{path_}.png"):
+            i += 1
+            path_ = f"{path.replace('.png', '')}({i})"
+        path = f"{path_}.png"
+
+        save_to_greyscale(self.img, filename=path)
+    
+    def save(self, path: str):
+        assert self.img is not None, "render before saving!"
+        if ".png" not in path:
+            path += ".png"
+
+        # Path
+        i = 0
+        path_ = path.replace(".png", "")
+        while os.path.exists(f"{path_}.png"):
+            i += 1
+            path_ = f"{path.replace('.png', '')}({i})"
+        path = f"{path_}.png"
+
+        save(self.img, filename=path)
+
+
 
 @dataclass
 class SimonFrame(Frame):
@@ -122,8 +160,21 @@ class SimonFrame(Frame):
         self.points_per_pixel = self.scatter_to_normalized(x, y)
         self.raw = self.normalize(self.points_per_pixel)
         return super().render(only_raw=only_raw)
-
-
+        
+    @staticmethod
+    def loadFromGeneric(path: str) -> "SimonFrame":
+        # shell Frame
+        frame = SimonFrame(
+            resolution=0,
+            percentile=0,
+            colors=None, # type: ignore
+            n=0,
+            a=0,
+            b=0
+        )
+        frame.raw = normalize_array(loadpng(path))
+        return frame
+        
 
 
 
