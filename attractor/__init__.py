@@ -6,6 +6,9 @@ from .space import (
     bpmspace,
     map_area,
     linspace,
+    sawspace,
+    squarespace,
+    Waveform
 )
 from .frame import Frame, SimonFrame
 from .utils import apply_colormap
@@ -16,13 +19,16 @@ __version__ = "0.1.0"
 __all__ = [
     "Performance_Renderer",
     "apply_colormap",
+    "squarespace",
     "SimonFrame",
     "ColorMap",
+    "sawspace",
     "sinspace",
     "cosspace",
     "bpmspace",
     "linspace",
     "map_area",
     "Option",
-    "Frame"
+    "Frame",
+    "Waveform"
 ]
