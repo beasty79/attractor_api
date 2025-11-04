@@ -7,7 +7,7 @@ import numpy as np
 from time import time
 from .colormap import ColorMap
 import os
-from .generic import save_to_greyscale , loadpng, normalize_array, save
+from .png import save_to_greyscale , loadpng, normalize_array, save
 
 
 @dataclass
