@@ -23,7 +23,7 @@ class Performance_Renderer:
             a: float | NDArray,
             b: float | NDArray,
             percentile: float | NDArray = 99,
-            iterations: float | NDArray = 99
+            iterations: float | NDArray = 1_000_000
     ) -> None:
         self.opts               = opts
         self.percentile         = percentile
@@ -85,6 +85,14 @@ class Performance_Renderer:
             new_name = os.path.join(base_path, name_comp)
         return new_name
 
+    def show_frame(self, frame_index: int):
+        frame: Frame = self.frames[frame_index]
+        frame.render()
+        frame.show()
+
+    def get_frame(self, frame_index: int):
+        return self.frames[frame_index]
+
     def show_first_frame(self):
         frame: Frame = self.frames[0]
         frame.render()
@@ -114,7 +122,7 @@ class Performance_Renderer:
         self.fps = round(self.fps / self._demo_var)
 
         # render demo video
-        self.start_render_process("./tmp.mp4", verbose_image=True, bypass_confirm=True)
+        self.start_render_process("./tmp.mp4", verbose_image=True, bypass_confirm=True, threads=8, chunksize=8)
 
         fps_ = fps if fps is not None else 10
         play_video("./tmp.mp4", self.fps if real_time else fps_)
@@ -223,6 +231,11 @@ class Performance_Renderer:
             self.counter = TerminalCounter(len(frames))
             if self.hook is None:
                 self.counter.start()
+
+
+        # print(frames[0])
+        # print(frames[-1])
+        # input()
 
         # render_func = lambda frame: render_frame(frame, only_raw=save_as_generic)
 

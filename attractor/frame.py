@@ -176,7 +176,15 @@ class SimonFrame(Frame):
         )
         frame.raw = normalize_array(loadpng(path))
         return frame
-        
+    
+    def show(self):
+        assert self.img is not None, "Render the frame before displaying it!"
+        show_image(self.img, a=self.a, b=self.b)
+
+    def __repr__(self) -> str:
+        a = float(self.a)
+        b = float(self.b)
+        return f"SimonFrame[{a=}, {b=}] {self.n=} {self.collapsed=}"
 
 
 

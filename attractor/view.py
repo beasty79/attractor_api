@@ -47,6 +47,8 @@ def play_video(video_path, fps=30):
 def show_image(
     img: np.ndarray,
     resolution: Optional[tuple[int, int]] = (1000, 1000),
+    a = None,
+    b = None
 ):
     """
     Zeigt ein NumPy-ndarray-Bild mit OpenCV an.
@@ -72,13 +74,19 @@ def show_image(
             raise ValueError("resolution-Werte müssen > 0 sein.")
         img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
 
-    cv2.imshow("Fractal", img)
+    window_name = "window"
+    if a is not None and b is not None:
+        str_a = round(float(a), 2)
+        str_b = round(float(b), 2)
+        window_name = f"a: {str_a} b: {str_b}"
+
+    cv2.imshow(window_name, img)
 
     while True:
         key = cv2.waitKey(1) & 0xFF
 
         # Prüfen, ob Fenster geschlossen wurde
-        if cv2.getWindowProperty("Fractal", cv2.WND_PROP_VISIBLE) < 1:
+        if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
             break
 
         # 'q' oder 'Esc' beendet die Anzeige

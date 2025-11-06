@@ -7,7 +7,6 @@ class Option:
     fps: int
     frames: int
     resolution: int
-    iterations: int
     colormap: ColorMap = None # type: ignore
 
     def __post_init__(self):
@@ -18,7 +17,6 @@ class Option:
     def from_time(
           seconds: float, 
           fps: int,
-          iterations: int = 1_000_000,
           resolution: int = 1000,
           colormap: ColorMap = None, # type: ignore
         ) -> "Option":
@@ -26,7 +24,6 @@ class Option:
         return Option(
             fps=fps, 
             frames=round(seconds * fps), 
-            iterations=iterations,
             resolution=resolution,
             colormap=colormap,
         )
