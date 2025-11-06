@@ -3,8 +3,6 @@ from numpy.typing import NDArray
 from numba import njit
 import numpy as np
 import math
-from .frame import Frame
-from .utils import apply_color
 
 
 @njit

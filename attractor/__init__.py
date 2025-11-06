@@ -13,11 +13,13 @@ from .space import (
 from .frame import Frame, SimonFrame
 from .utils import apply_colormap
 from .opts import Option
+from .complex_path import ComplexPath
 
 __version__ = "0.1.0"
 
 __all__ = [
     "Performance_Renderer",
+    "ComplexPath",
     "apply_colormap",
     "squarespace",
     "SimonFrame",
