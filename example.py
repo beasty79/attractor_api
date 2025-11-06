@@ -1,5 +1,6 @@
-from attractor import sinspace, Performance_Renderer, ColorMap, Option
-
+from attractor import (
+    sinspace, Performance_Renderer, ColorMap, Option, KeyframeInterpolator, Point
+)
 
 def main():
     # Here You define the main properties of a video render    
@@ -39,7 +40,34 @@ def main():
     # renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
 
 
+def keyframe_example():
+    # generic animation option (20 frames)
+    opts = Option.from_time(
+        seconds=4,
+        fps=5
+    )
+
+    # ComplexPath is similar to linspace, sinspace, sqaurespace, ...
+    # The difference you can define a set of point: point(value, frame)
+    # between this points linspace is used to interpolate between those
+    interpolation = KeyframeInterpolator(opts, 0.32, 0.32)
+    interpolation.add_keyframe(Point(frame=5, value=0.4))
+    interpolation.add_keyframe(Point(frame=10, value=0.4))
+    interpolation.add_keyframe(Point(frame=15, value=0.32))
+
+    a = interpolation.to_array()
+
+    renderer = Performance_Renderer(
+        opts=opts,
+        a=a,
+        b=1.5,
+    )
+    renderer.set_static("a", False)
+    renderer.show_demo(nth_frame=1)
+
+
 if __name__ == "__main__":
     # see all colormaps available
     print(ColorMap.colormaps())
-    main()
+    # main()
+    #keyframe_example()

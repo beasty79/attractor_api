@@ -13,13 +13,13 @@ from .space import (
 from .frame import Frame, SimonFrame
 from .utils import apply_colormap
 from .opts import Option
-from .complex_path import ComplexPath
+from .complex_path import KeyframeInterpolator, Point
 
 __version__ = "0.1.0"
 
 __all__ = [
     "Performance_Renderer",
-    "ComplexPath",
+    "KeyframeInterpolator",
     "apply_colormap",
     "squarespace",
     "SimonFrame",
@@ -32,5 +32,6 @@ __all__ = [
     "map_area",
     "Option",
     "Frame",
+    "Point",
     "Waveform"
 ]
