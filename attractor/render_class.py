@@ -22,7 +22,8 @@ class Performance_Renderer:
             opts: Option,
             a: float | NDArray,
             b: float | NDArray,
-            percentile: float | NDArray = 99
+            percentile: float | NDArray = 99,
+            iterations: float | NDArray = 99
     ) -> None:
         self.opts               = opts
         self.percentile         = percentile
@@ -31,7 +32,7 @@ class Performance_Renderer:
         self.value = {
             'a': a,
             'b': b,
-            'n': self.opts.iterations,
+            'n': iterations,
             'resolution': opts.resolution,
             'percentile': percentile
         }
@@ -122,10 +123,10 @@ class Performance_Renderer:
         self.fps = fps_cache
         self._demo = False
 
-    def get_frames(self, res, percentile, color, n, a, b) -> list[Frame]:
+    def get_frames(self, res, percentile, color, n, a, b) -> list[SimonFrame]:
         """Helper function"""
         assert all(len(lst) == len(res) for lst in [a, b, n, percentile, color]), "Mismatched lengths in input lists"
-        return [
+        frames = [
             SimonFrame(
                 resolution=res[i],
                 percentile=percentile[i],
@@ -136,6 +137,7 @@ class Performance_Renderer:
             )
             for i in range(len(res))
         ]
+        return frames
     
     @property
     def frames(self) -> list[SimonFrame]:

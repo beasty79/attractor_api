@@ -153,7 +153,9 @@ class SimonFrame(Frame):
         if isinstance(self.a, list) or isinstance(self.b, list):
             raise ValueError("a or b are a list, when using lists for assignment call .toFrames() first")
 
-        assert isinstance(self.n, int)
+        if not isinstance(self.n, int):
+            self.n = int(self.n) # type: ignore
+
         self._t_start = time()
 
         x, y = simon(self.a, self.b, self.n)
