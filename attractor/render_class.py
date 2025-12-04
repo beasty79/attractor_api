@@ -156,12 +156,13 @@ class Performance_Renderer:
         frame.render()
         frame.show()
 
-    def show_demo(self, 
-                  nth_frame: int = 10, 
-                  real_time: bool = False, 
-                  resolution: int = 750, 
-                  iterations: int = 500_000,
-                  fps: Optional[int] = None
+    def show_demo(
+            self, 
+            nth_frame: int = 10, 
+            real_time: bool = False, 
+            resolution: int = 750, 
+            iterations: int = 500_000,
+            fps: Optional[int] = None
         ):
         self._demo_var = nth_frame
         if os.path.exists("./tmp.mp4"):
@@ -206,7 +207,7 @@ class Performance_Renderer:
         res: list[int] = self.get_iter_value("resolution")
         a: list[int] = self.get_iter_value("a")
         b: list[int] = self.get_iter_value("b")
-        n: list[int] = self.get_iter_value("n")
+        n: list[int] = self.get_iter_value("iterations")
         percentile: list[int] = self.get_iter_value("percentile")
 
         assert all(len(lst) == len(res) for lst in [a, b, n, percentile]), "Mismatched lengths in input lists"
@@ -231,7 +232,8 @@ class Performance_Renderer:
             skip_empty_frames: bool= True,
             bypass_confirm: bool   = False,
             save_as_generic: bool  = False,
-            use_counter: bool      = True
+            use_counter: bool      = True,
+            save_render_information= False
         ):
         """starts the render Process
 

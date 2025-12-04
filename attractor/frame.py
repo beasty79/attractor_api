@@ -36,6 +36,7 @@ class Frame:
         self.points_per_pixel = None
         self.collapsed: bool = False
         self._t_start: float = 0
+        self.colormap: Optional[ColorMap] = None
 
     @property
     def img(self) -> NDArray:
@@ -104,6 +105,7 @@ class Frame:
             self.img = apply_color(self.raw, self.colors) # type: ignore
         else:
             self.img = apply_color(self.raw, colormap.get())
+            self.colormap = colormap
 
     def saveAsGeneric(self, path: str):
         """
@@ -179,7 +181,12 @@ class SimonFrame(Frame):
     
     def show(self):
         assert self.img is not None, "Render the frame before displaying it!"
-        show_image(self.img, a=self.a, b=self.b)
+        cmapname = None
+        inverted = None
+        if self.colormap is not None:
+            cmapname = self.colormap.name
+            inverted = self.colormap.inverted
+        show_image(self.img, a=self.a, b=self.b, colormap_name=cmapname, inverted=inverted)
 
     def __repr__(self) -> str:
         a = float(self.a)

@@ -27,7 +27,7 @@ def frames_from_video(path: str) -> Generator[np.typing.NDArray]:
     finally:
         cap.release()
 
-def color_generic(path: str, colormap: ColorMap, fps: int = 10):
+def color_generic(path: str, colormap: ColorMap, fps: int = 10, frames=2800):
     folder = os.path.dirname(path)
     fname = os.path.basename(path)
     export_path = os.path.join(folder, f"{fname.split(".")[0]}-{colormap.name}.mp4")

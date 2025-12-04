@@ -48,7 +48,9 @@ def show_image(
     img: np.ndarray,
     resolution: Optional[tuple[int, int]] = (1000, 1000),
     a = None,
-    b = None
+    b = None,
+    colormap_name = None,
+    inverted = None
 ):
     """
     Zeigt ein NumPy-ndarray-Bild mit OpenCV an.
@@ -78,7 +80,7 @@ def show_image(
     if a is not None and b is not None:
         str_a = round(float(a), 2)
         str_b = round(float(b), 2)
-        window_name = f"a: {str_a} b: {str_b}"
+        window_name = f"a: {str_a} b: {str_b}        Colormap: {colormap_name} ({inverted})"
 
     cv2.imshow(window_name, img)
 

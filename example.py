@@ -8,7 +8,6 @@ def main():
         fps=10,
         frames=100,
         resolution=1000,
-        iterations=1_000_000,
         colormap=ColorMap("viridis")
     )
 
@@ -61,6 +60,7 @@ def keyframe_example():
         opts=opts,
         a=a,
         b=1.5,
+        iterations=3_000_000
     )
     renderer.set_static("a", False)
     renderer.show_demo(nth_frame=1)
