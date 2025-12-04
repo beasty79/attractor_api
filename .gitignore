@@ -27,6 +27,7 @@ playground.py
 # Testing
 .coverage
 .tox/
+*.json
 .nox/
 pytest_cache/
 

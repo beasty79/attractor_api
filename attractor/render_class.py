@@ -4,7 +4,8 @@ import multiprocessing
 from typing import Any
 from time import time
 import os
-
+from json import dump, dumps
+import numpy as np
 from .file_writer import VideoFileWriter
 from .terminal import TerminalCounter
 from .utils import promt
@@ -32,14 +33,14 @@ class Performance_Renderer:
         self.value = {
             'a': a,
             'b': b,
-            'n': iterations,
+            'iterations': iterations,
             'resolution': opts.resolution,
             'percentile': percentile
         }
         self.static = {
             'a': True,
             'b': True,
-            'n': True,
+            'iterations': True,
             'resolution': True,
             'percentile': True
         }
@@ -53,11 +54,63 @@ class Performance_Renderer:
 
     def set_static(self, argument: Any, is_static: bool):
         """
-        argument: {'a', 'b', 'n', 'resolution', 'percentile'}
+        argument: {'a', 'b', 'iterations', 'resolution', 'percentile'}
         """
         if argument not in self.static:
-            raise ValueError(f"arg: {argument} is invalid, should be: ['a', 'b', 'n', 'resolution', 'percentile']")
+            raise ValueError(f"arg: {argument} is invalid, should be: ['a', 'b', 'iterations', 'resolution', 'percentile']")
         self.static[argument] = is_static
+
+    def save_metadata(self, mp4path: str):
+
+        def value_of(arg: str):
+            value = None
+            value = self.value[arg]
+
+            if isinstance(value, np.ndarray):
+                value = value.tolist()
+
+            return value
+
+        data = {
+            "fps": self.fps,
+            "frames": self.opts.frames,
+            "cmap": {
+                "name": self.opts.colormap.name,
+                "inverted": self.opts.colormap.inverted
+            },
+            "resolution": self.opts.resolution,
+            "seconds": round(self.opts.total_time, 1),
+            "a": {
+                "static": self.static["a"],
+                "value": value_of("a")
+            },
+            "b": {
+                "static": self.static["b"],
+                "value": value_of("b")
+            },
+            "iterations": {
+                "static": self.static["iterations"],
+                "value": value_of("iterations")
+            },
+            "resolution": {
+                "static": self.static["resolution"],
+                "value": value_of("resolution")
+            },
+            "percentile": {
+                "static": self.static["percentile"],
+                "value": value_of("percentile")
+            }
+        }
+        try:
+            dumps(data)
+        except Exception as e:
+            print(e)
+            raise e
+            return
+
+
+        with open(f"{mp4path.removesuffix(".mp4")}.json", "w") as f:
+            dump(data, f, indent=4)
 
     def addHook(self, signal):
         self.hook = signal
@@ -81,7 +134,7 @@ class Performance_Renderer:
         i_ = 0
         while os.path.exists(new_name):
             i_ += 1
-            name_comp = f"{name_only}({i_}){ext}"
+            name_comp = f"{name_only}_{i_}_{ext}"
             new_name = os.path.join(base_path, name_comp)
         return new_name
 
@@ -194,7 +247,7 @@ class Performance_Renderer:
         res: list[int] = self.get_iter_value("resolution")
         a: list[int] = self.get_iter_value("a")
         b: list[int] = self.get_iter_value("b")
-        n: list[int] = self.get_iter_value("n")
+        n: list[int] = self.get_iter_value("iterations")
         percentile: list[int] = self.get_iter_value("percentile")
         
         if save_as_generic:
@@ -219,10 +272,12 @@ class Performance_Renderer:
             fname += '.mp4'
 
         # File Writer
+        fname_ = self.get_unique_fname(fname)
         self.writer = VideoFileWriter(
-            filename=self.get_unique_fname(fname),
+            filename=fname_,
             fps=self.fps
         )
+        self.save_metadata(fname_)
 
         # Terminal Feedback
         tstart = time()
@@ -232,15 +287,6 @@ class Performance_Renderer:
             if self.hook is None:
                 self.counter.start()
 
-
-        # print(frames[0])
-        # print(frames[-1])
-        # input()
-
-        # render_func = lambda frame: render_frame(frame, only_raw=save_as_generic)
-
-        # func = render_frame if not save_as_generic else render_frame_raw
-        # func = partial(render_frame, only_raw=save_as_generic)
         # Multiproccessing
         try:
             with multiprocessing.Pool(threads) as pool:
