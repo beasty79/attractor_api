@@ -1,5 +1,5 @@
 from attractor import (
-    sinspace, Performance_Renderer, ColorMap, Option, KeyframeInterpolator, Point
+    sinspace, Performance_Renderer, ColorMap, Option, KeyframeInterpolator, Point, color_generic
 )
 
 def main():
@@ -64,6 +64,26 @@ def keyframe_example():
     )
     renderer.set_static("a", False)
     renderer.show_demo(nth_frame=1)
+
+def generic_example():
+    opts = Option.from_time(
+        seconds=4,
+        fps=5
+    )
+
+    renderer = Performance_Renderer(
+        opts=opts,
+        a=0.35,
+        b=1.5,
+        iterations=3_000_000
+    )  
+    # Set generic flag to save image in grayscale
+    renderer.start_render_process("demo.mp4", save_as_generic=True)
+
+    # after rendering you can apply a colormap (still takes some time)
+    # make sure to use the same fps and frames as the rendering here
+    color_generic("demo.mp4", ColorMap("viridis"), opts.fps, frames=opts.frames)
+
 
 
 if __name__ == "__main__":

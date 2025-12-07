@@ -1,6 +1,8 @@
 import cv2
 from typing import Optional
 import numpy as np
+from .colormap import ColorMap
+if 0 != 0: from attractor.frame import SimonFrame
 
 def play_video(video_path, fps=30):
     """
@@ -43,6 +45,74 @@ def play_video(video_path, fps=30):
     cap.release()
     cv2.destroyAllWindows()
 
+
+def show_frame(
+    frame: "SimonFrame"
+):
+    """
+    Zeigt ein NumPy-ndarray-Bild mit OpenCV an.
+    Schließt, wenn 'q', 'Esc' gedrückt oder das Fenster geschlossen wird.
+    Optional kann eine feste Ausgabeauflösung angegeben werden.
+
+    Args:
+        img (np.ndarray): Das anzuzeigende Bild.
+        resolution (tuple[int, int], optional): Zielauflösung (Breite, Höhe) in Pixeln.
+        rgb_to_bgr (bool): Falls True, wird das Bild von RGB nach BGR konvertiert.
+    """
+    img = frame.img
+    resolution = (frame.resolution, frame.resolution)
+
+    if not isinstance(img, np.ndarray):
+        raise TypeError("Input muss ein NumPy ndarray sein.")
+
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    # Bild auf gewünschte Auflösung skalieren
+    if resolution is not None:
+        if len(resolution) != 2:
+            raise ValueError("resolution muss ein Tupel (width, height) sein.")
+        width, height = resolution
+        if width <= 0 or height <= 0:
+            raise ValueError("resolution-Werte müssen > 0 sein.")
+        img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+
+    window_name = "window"
+    str_a = round(float(frame.a), 2)
+    str_b = round(float(frame.b), 2)
+    window_name = f"a: {str_a} b: {str_b}        Colormap: {frame.colors.name} ({frame.colors.inverted})"
+
+    cv2.imshow(window_name, img)
+    colormaps: list[str] = ColorMap.colormaps()
+    current_index = colormaps.index(frame.colors.name)
+    inverted = frame.colors.inverted
+
+    while True:
+        key = cv2.waitKey(1) & 0xFF
+
+        # Prüfen, ob Fenster geschlossen wurde
+        if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
+            break
+
+        # 'q' oder 'Esc' beendet die Anzeige
+        if key in (ord('q'), 27):
+            break
+
+        if key == ord('a'):
+            current_index -= 1
+            frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
+        elif key == ord('d'):
+            current_index += 1
+            frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
+        elif key == ord('i'):
+            inverted = not inverted
+            frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
+
+        # --- Recalculate the displayed image ---
+        img = frame.img
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+        cv2.imshow(window_name, img)
+    cv2.destroyAllWindows()
 
 def show_image(
     img: np.ndarray,

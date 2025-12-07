@@ -8,6 +8,7 @@ class ColorMap:
         self.name = name
         self.color = self._get_colors_array(name)
         self.inverted = inverted
+        self.is_grey_scale = False
 
     def set_inverted(self, state: bool):
         self.inverted = state
@@ -32,6 +33,8 @@ class ColorMap:
     def fill_background(self, hexcolor: str):
         self.change_color_entry(0, 5, hexcolor)
 
+    def set_greysscale(self, isGreyScale: bool):
+        self.is_grey_scale = isGreyScale
 
     def greyscale(self, inverted: bool = False) -> NDArray:
         linear = np.linspace(1.0, 0.0, 256)
@@ -40,6 +43,8 @@ class ColorMap:
         return rgba if not inverted else rgba[::-1]
 
     def get(self) -> NDArray:
+        if self.is_grey_scale:
+            return self.greyscale(inverted=self.inverted)
         return self.color[::-1] if self.inverted else self.color
 
     def __repr__(self) -> str:

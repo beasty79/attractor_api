@@ -1,5 +1,5 @@
 from numpy.typing import NDArray
-from typing import Optional
+from typing import List, Optional
 import multiprocessing
 from typing import Any
 from time import time
@@ -184,22 +184,6 @@ class Performance_Renderer:
         # rechange variables
         self.fps = fps_cache
         self._demo = False
-
-    def get_frames(self, res, percentile, color, n, a, b) -> list[SimonFrame]:
-        """Helper function"""
-        assert all(len(lst) == len(res) for lst in [a, b, n, percentile, color]), "Mismatched lengths in input lists"
-        frames = [
-            SimonFrame(
-                resolution=res[i],
-                percentile=percentile[i],
-                colors=color[i],
-                n=n[i],
-                a=a[i],
-                b=b[i]
-            )
-            for i in range(len(res))
-        ]
-        return frames
     
     @property
     def frames(self) -> list[SimonFrame]:
@@ -215,13 +199,36 @@ class Performance_Renderer:
             SimonFrame(
                 resolution=res[i],
                 percentile=percentile[i],
-                colors=self.colormap.get(), # type: ignore
+                colors=self.colormap, # type: ignore
                 n=n[i],
                 a=a[i],
                 b=b[i]
             )
             for i in range(len(res))
         ]
+    
+    @property
+    def demoFrames(self) -> list[SimonFrame]:
+        """Helper function"""
+        a: list[float] = self.get_iter_value("a")
+        b: list[float] = self.get_iter_value("b")
+        percentile: list[float] = self.get_iter_value("percentile")
+        res = [self._demo_res] * len(a)
+        iterations = [self._demo_iterations] * len(a)
+
+        assert all(len(lst) == len(res) for lst in [a, b, iterations, percentile]), "Mismatched lengths in input lists"
+        frames = [
+            SimonFrame(
+                resolution=res[i],
+                percentile=percentile[i],
+                colors=self.colormap, # type: ignore
+                n=iterations[i],
+                a=a[i],
+                b=b[i]
+            )
+            for i in range(len(res))
+        ]
+        return frames[::self._demo_var]
 
     def start_render_process(
             self,
@@ -239,41 +246,29 @@ class Performance_Renderer:
 
         Args:
             fname (str): filename / filepath
-            verbose_image (bool, optional): adds a small text with the parameter per frmae. Defaults to False.
+            verbose_image (bool, optional): adds a small text with the parameter per frame. Defaults to False.
             threads (Optional[int], optional): cpu cores to use. Defaults to 4.
             chunksize (int, optional): the higher the chunksize the more efficient but it needs more memory. Defaults to 4.
             skip_empty_frames (bool, optional): skips frames wheree the fractal collapses. Defaults to True.
             bypass_confirm (bool, optional): bypass the terminal confirmation. Defaults to False.
             save_as_generic (bool, optional): saves as grey space image so it can be loaded and colored again without the need to render it again. Defaults to False.
         """
-        res: list[int] = self.get_iter_value("resolution")
-        a: list[int] = self.get_iter_value("a")
-        b: list[int] = self.get_iter_value("b")
-        n: list[int] = self.get_iter_value("iterations")
-        percentile: list[int] = self.get_iter_value("percentile")
-        
+        a: list[float] = self.get_iter_value("a")
+        b: list[float] = self.get_iter_value("b")
+
         if save_as_generic:
-            self.color = self.colormap.greyscale()
-        else:
-            self.color = self.colormap.get()
+            self.colormap.set_greysscale(True)
 
-        col = [self.color] * len(a)
-
-        # Create Frame dataclass for every frame
-        if self._demo:
-            frames = self.get_frames([self._demo_res] * len(n), percentile, col, [self._demo_iterations] * len(n), a, b)
-            frames = frames[::self._demo_var]
-        else:
-            frames = self.get_frames(res, percentile, col, n, a, b)
+        # Generate SimonFrame Dataclass
+        frames: List[SimonFrame] = self.demoFrames if self._demo else self.frames
 
         if not bypass_confirm:
             promt(len(frames), self.fps)
         
-
+        # Verify filename / Ready Filewriter
         if not fname.lower().endswith('.mp4'):
             fname += '.mp4'
 
-        # File Writer
         fname_ = self.get_unique_fname(fname)
         self.writer = VideoFileWriter(
             filename=fname_,

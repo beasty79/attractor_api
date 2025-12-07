@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from numpy.typing import NDArray
 from typing import Optional
-from .view import show_image
+from .view import show_frame, show_image
 from .utils import apply_color
 import numpy as np
 from time import time
@@ -18,15 +18,15 @@ class DeltaTime():
         return f"{self.elapsedTime:.2f}s"
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Frame:
     """
     This Class Represents one render instance
     Identifiers like, a, b, c, ... are initial value for the strange attractors
     """
-    resolution: int | list[int]
-    percentile: float | list[float]
-    colors: NDArray | list[NDArray]
+    resolution: int = 1000
+    percentile: float | list[float] = 99.4
+    colors: ColorMap
     n: int | list[int]
 
     def __post_init__(self):
@@ -36,7 +36,6 @@ class Frame:
         self.points_per_pixel = None
         self.collapsed: bool = False
         self._t_start: float = 0
-        self.colormap: Optional[ColorMap] = None
 
     @property
     def img(self) -> NDArray:
@@ -48,7 +47,7 @@ class Frame:
 
         if isinstance(self.colors, list):
             raise Exception()
-        self.img_ = apply_color(self.raw, self.colors)
+        self.img_ = apply_color(self.raw, self.colors.get())
         return self.img_
 
 
@@ -70,7 +69,7 @@ class Frame:
         if not only_raw and self.raw is not None:
             if isinstance(self.colors, list):
                 raise Exception()
-            self.img = apply_color(self.raw, self.colors)
+            self.img = apply_color(self.raw, self.colors.get())
         
         return DeltaTime(time() - self._t_start)
 
@@ -105,7 +104,7 @@ class Frame:
             self.img = apply_color(self.raw, self.colors) # type: ignore
         else:
             self.img = apply_color(self.raw, colormap.get())
-            self.colormap = colormap
+            self.colors = colormap
 
     def saveAsGeneric(self, path: str):
         """
@@ -179,14 +178,18 @@ class SimonFrame(Frame):
         frame.raw = normalize_array(loadpng(path))
         return frame
     
+    # def show(self):
+    #     assert self.img is not None, "Render the frame before displaying it!"
+    #     cmapname = None
+    #     inverted = None
+    #     if self.colormap is not None:
+    #         cmapname = self.colormap.name
+    #         inverted = self.colormap.inverted
+    #     show_image(self.img, a=self.a, b=self.b, colormap_name=cmapname, inverted=inverted)
+    
     def show(self):
-        assert self.img is not None, "Render the frame before displaying it!"
-        cmapname = None
-        inverted = None
-        if self.colormap is not None:
-            cmapname = self.colormap.name
-            inverted = self.colormap.inverted
-        show_image(self.img, a=self.a, b=self.b, colormap_name=cmapname, inverted=inverted)
+        show_frame(self)
+
 
     def __repr__(self) -> str:
         a = float(self.a)

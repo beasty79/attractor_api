@@ -3,20 +3,18 @@
 **Attractor-tools** is a Python module for animating the **Simon fractal** using efficient rendering. It provides a clean API to generate frames, assinging colormaps, and export visualizations as videos.
 
 ---
-
 ## ✨ Features
 - Animate the Simon fractal with customizable parameters
 - NumPy, Numba and Multiprocessing for performance
-
+- Automate Parameters using interpolation between a set of points
 ---
 
-## 📦 Installation
-Clone the repo and install in editable mode for development:
+## Example:
+![alt text]()
 
+## 📦 Installation
 ```bash
-git clone https://github.com/beasty79/attractor_api.git
-cd attractor
-pip install -e .
+pip install attractor-tools
 ```
 
 ## Example usage
@@ -54,33 +52,52 @@ if __name__ == "__main__":
     main()
 ```
 
-# Attractor Visualization API
+### Automations
+```python
+def keyframe_example():
+    # generic animation option (20 frames)
+    opts = Option.from_time(
+        seconds=4,
+        fps=5
+    )
 
-## Overview
+    # KeyframeInterpolator is similar to linspace, sinspace, sqaurespace, ...
+    # The difference you can define a set of point: point(value, frame)
+    # between this points linspace is used to interpolate between those
+    interpolation = KeyframeInterpolator(opts, 0.32, 0.32)
+    interpolation.add_keyframe(Point(frame=5, value=0.4))
+    interpolation.add_keyframe(Point(frame=10, value=0.4))
+    interpolation.add_keyframe(Point(frame=15, value=0.32))
 
-This package provides tools for generating and rendering dynamic attractor visualizations using customizable color maps and performance-optimized rendering techniques.
+    a = interpolation.to_array()
 
+    renderer = Performance_Renderer(
+        opts=opts,
+        a=a,
+        b=1.5,
+        iterations=3_000_000
+    )
+    renderer.set_static("a", False)
+    renderer.show_demo(nth_frame=1)
+```
+### Generic mp4
+```python
+def generic_example():
+    opts = Option.from_time(
+        seconds=4,
+        fps=5
+    )
 
-## API
-- **render_frame**
-  Core function to compute attractor frame data.
+    renderer = Performance_Renderer(
+        opts=opts,
+        a=0.35,
+        b=1.5,
+        iterations=3_000_000
+    )  
+    # Set generic flag to save image in grayscale
+    renderer.start_render_process("demo.mp4", save_as_generic=True)
 
-- **Performance_Renderer**
-  High-performance renderer supporting multi-threaded frame generation and video output.
-
-## Utility Functions
-
-- **ColorMap**
-  Utility class to create and manage color maps with optional inversion.
-
-- **sinspace / cosspace**
-  Generate smooth sine- or cosine-shaped value sequences over a specified range.
-
-- **bpmspace**
-  Create time-based sequences synced to beats per minute (BPM) for rhythmic animations.
-
-- **map_area**
-  Batch process and render attractor animations over a grid of parameters.
-
-- **apply_colormap**
-  Apply a color map to attractor data to produce a colored image.
+    # after rendering you can apply a colormap (still takes some time)
+    # make sure to use the same fps and frames as the rendering
+    color_generic("demo.mp4", ColorMap("viridis"), opts.fps, frames=opts.frames)
+```

@@ -14,6 +14,7 @@ from .frame import Frame, SimonFrame
 from .utils import apply_colormap
 from .opts import Option
 from .complex_path import KeyframeInterpolator, Point
+from .generic import color_generic
 
 __version__ = "0.1.0"
 
@@ -21,6 +22,7 @@ __all__ = [
     "Performance_Renderer",
     "KeyframeInterpolator",
     "apply_colormap",
+    "color_generic",
     "squarespace",
     "SimonFrame",
     "ColorMap",

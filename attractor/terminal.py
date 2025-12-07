@@ -34,8 +34,15 @@ class TerminalCounter:
         progress = self.i / self.max_i
         filled_len = int(self.bar_length * progress)
         bar = '█' * filled_len + '-' * (self.bar_length - filled_len)
-        line = f"[{bar}] {self.i}/{self.max_i} ETA: {self.eta()}"
+        fps_val = f"{self.fps():.1f}"
+        line = f"[{bar}] {self.i}/{self.max_i} ETA: {self.eta()} ({fps_val} fps)"
 
         padded_line = line.ljust(80)
         sys.stdout.write(f"\r{padded_line}")
         sys.stdout.flush()
+
+    def fps(self):
+        elapsed = (datetime.now() - self.timestamp_start).total_seconds()
+        if elapsed == 0:
+            return 0
+        return self.i / elapsed
