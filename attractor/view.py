@@ -1,7 +1,7 @@
-import cv2
 from typing import Optional
-import numpy as np
 from .colormap import ColorMap
+import numpy as np
+import cv2
 if 0 != 0: from attractor.frame import SimonFrame
 
 def play_video(video_path, fps=30):
@@ -46,19 +46,10 @@ def play_video(video_path, fps=30):
     cv2.destroyAllWindows()
 
 
-def show_frame(
-    frame: "SimonFrame"
-):
-    """
-    Zeigt ein NumPy-ndarray-Bild mit OpenCV an.
-    Schließt, wenn 'q', 'Esc' gedrückt oder das Fenster geschlossen wird.
-    Optional kann eine feste Ausgabeauflösung angegeben werden.
+def show_frame(frame: "SimonFrame"):
+    import cv2
+    import numpy as np
 
-    Args:
-        img (np.ndarray): Das anzuzeigende Bild.
-        resolution (tuple[int, int], optional): Zielauflösung (Breite, Höhe) in Pixeln.
-        rgb_to_bgr (bool): Falls True, wird das Bild von RGB nach BGR konvertiert.
-    """
     img = frame.img
     resolution = (frame.resolution, frame.resolution)
 
@@ -76,17 +67,25 @@ def show_frame(
             raise ValueError("resolution-Werte müssen > 0 sein.")
         img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
 
+    # Erstelle das Fenster einmal
     window_name = "window"
-    str_a = round(float(frame.a), 2)
-    str_b = round(float(frame.b), 2)
-    window_name = f"a: {str_a} b: {str_b}        Colormap: {frame.colors.name} ({frame.colors.inverted})"
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(window_name, 1000, 1000)
 
-    cv2.imshow(window_name, img)
     colormaps: list[str] = ColorMap.colormaps()
     current_index = colormaps.index(frame.colors.name)
     inverted = frame.colors.inverted
 
     while True:
+        # Update Window Title dynamically
+        title = f"a: {frame.a:.3f} b: {frame.b:.3f}        Colormap: {frame.colors.name} ({frame.colors.inverted})"
+        cv2.setWindowTitle(window_name, title)
+
+        # Anzeige
+        img = cv2.cvtColor(frame.img, cv2.COLOR_RGB2BGR)
+        img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+        cv2.imshow(window_name, img)
+
         key = cv2.waitKey(1) & 0xFF
 
         # Prüfen, ob Fenster geschlossen wurde
@@ -98,20 +97,17 @@ def show_frame(
             break
 
         if key == ord('a'):
-            current_index -= 1
+            current_index = (current_index - 1) % len(colormaps)
             frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
         elif key == ord('d'):
-            current_index += 1
+            current_index = (current_index + 1) % len(colormaps)
             frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
         elif key == ord('i'):
             inverted = not inverted
             frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
+        elif key == ord('s'):
+            frame.save_with_dialogue()
 
-        # --- Recalculate the displayed image ---
-        img = frame.img
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
-        cv2.imshow(window_name, img)
     cv2.destroyAllWindows()
 
 def show_image(

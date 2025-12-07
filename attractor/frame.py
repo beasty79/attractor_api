@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from numpy.typing import NDArray
 from typing import Optional
-from .view import show_frame, show_image
-from .utils import apply_color
-import numpy as np
 from time import time
-from .colormap import ColorMap
+import numpy as np
 import os
+
+from .utils import apply_color, get_new_png_path
+from .view import show_frame, show_image
+from .colormap import ColorMap
 from .png import save_to_greyscale , loadpng, normalize_array, save
 
 
@@ -126,6 +127,16 @@ class Frame:
 
         save_to_greyscale(self.img, filename=path)
     
+    def save_with_dialogue(self):
+        path = get_new_png_path()
+        
+        if not path:
+            return
+        
+        save(self.img, filename=path)
+        print(f"save to: {path}")
+        return
+
     def save(self, path: str):
         assert self.img is not None, "render before saving!"
         if ".png" not in path:
@@ -140,7 +151,6 @@ class Frame:
         path = f"{path_}.png"
 
         save(self.img, filename=path)
-
 
 
 @dataclass
@@ -178,15 +188,6 @@ class SimonFrame(Frame):
         frame.raw = normalize_array(loadpng(path))
         return frame
     
-    # def show(self):
-    #     assert self.img is not None, "Render the frame before displaying it!"
-    #     cmapname = None
-    #     inverted = None
-    #     if self.colormap is not None:
-    #         cmapname = self.colormap.name
-    #         inverted = self.colormap.inverted
-    #     show_image(self.img, a=self.a, b=self.b, colormap_name=cmapname, inverted=inverted)
-    
     def show(self):
         show_frame(self)
 
@@ -195,7 +196,6 @@ class SimonFrame(Frame):
         a = float(self.a)
         b = float(self.b)
         return f"SimonFrame[{a=}, {b=}] {self.n=} {self.collapsed=}"
-
 
 
 # @dataclass

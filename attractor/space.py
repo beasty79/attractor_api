@@ -190,7 +190,6 @@ def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty:
         fps=fps, 
         frames=len(A), 
         resolution=resolution, 
-        iterations=n,
         colormap=colormap
     )
 

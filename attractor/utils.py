@@ -1,8 +1,32 @@
 import numpy as np
 from numpy.typing import NDArray
+from PyQt6.QtWidgets import QFileDialog, QApplication
 if 0 != 0: from .space import ColorMap
 if 0 != 0: from .frame import Frame
+app = QApplication([])
 
+def get_new_png_path(parent=None, title="Save PNG file"):
+    """
+    Opens a save-file dialog and returns a valid, non-existing .png file path.
+    If the user cancels, returns an empty string.
+    Ensures the returned path ends with '.png'.
+    """
+    # Check if a QApplication already exists
+    file_path, _ = QFileDialog.getSaveFileName(
+        parent,
+        title,
+        "",
+        "PNG Image (*.png)"
+    )
+
+    if not file_path:
+        return ""  # user cancelled
+
+    # Ensure .png extension
+    if not file_path.lower().endswith(".png"):
+        file_path += ".png"
+
+    return file_path
 
 def promt(frames, fps):
     t = round(frames / fps, 1)
@@ -34,7 +58,7 @@ def make_filename(a_1, a_2, b_1, b_2, extension="mp4"):
 
 def apply_color(normalized: NDArray[np.floating], colors: NDArray[np.uint8]) -> NDArray[np.uint8]:
     assert np.max(normalized) <= 1, "normalize should be [0, 1]"
-    values = (normalized * 255).astype(int)
+    values = (normalized * 255).astype(int) # type: ignore
     values = np.clip(values, 0, 255)
     img = (colors[values] * 255).astype(np.uint8)
     return img

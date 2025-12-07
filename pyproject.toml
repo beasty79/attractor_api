@@ -23,6 +23,7 @@ dependencies = [
   "numpy",
   "numba",
   "opencv-python"
+  "pyqt6"
 ]
 
 [project.optional-dependencies]
