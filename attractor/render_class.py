@@ -113,6 +113,7 @@ class Performance_Renderer:
             dump(data, f, indent=4)
 
     def addHook(self, signal):
+        """Hook for a pyqtsignal"""
         self.hook = signal
 
     def get_iter_value(self, arg: str) -> list[Any]:
@@ -274,7 +275,8 @@ class Performance_Renderer:
             filename=fname_,
             fps=self.fps
         )
-        self.save_metadata(fname_)
+        if save_render_information:
+            self.save_metadata(fname_)
 
         # Terminal Feedback
         tstart = time()

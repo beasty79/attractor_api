@@ -1,4 +1,5 @@
 from typing import Optional
+from attractor.modMenu import SideWindow
 from .colormap import ColorMap
 import numpy as np
 import cv2
@@ -47,9 +48,6 @@ def play_video(video_path, fps=30):
 
 
 def show_frame(frame: "SimonFrame"):
-    import cv2
-    import numpy as np
-
     img = frame.img
     resolution = (frame.resolution, frame.resolution)
 
@@ -76,9 +74,21 @@ def show_frame(frame: "SimonFrame"):
     current_index = colormaps.index(frame.colors.name)
     inverted = frame.colors.inverted
 
+    mod_menu_open = False
+
+    def modMenuUpdate():
+        if mod_menu_open:
+            window.updateUi()
+
+    delta = 0.01
     while True:
+        key = cv2.waitKey(1) & 0xFF
+
+        if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
+            break
+
         # Update Window Title dynamically
-        title = f"a: {frame.a:.3f} b: {frame.b:.3f}        Colormap: {frame.colors.name} ({frame.colors.inverted})"
+        title = f"a: {frame.a:.3f} b: {frame.b:.3f}        Colormap: {frame.colors.name} ({frame.colors.inverted})          collapsed={frame.collapsed}     delta={delta:6f}"
         cv2.setWindowTitle(window_name, title)
 
         # Anzeige
@@ -86,7 +96,6 @@ def show_frame(frame: "SimonFrame"):
         img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
         cv2.imshow(window_name, img)
 
-        key = cv2.waitKey(1) & 0xFF
 
         # Prüfen, ob Fenster geschlossen wurde
         if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
@@ -96,19 +105,18 @@ def show_frame(frame: "SimonFrame"):
         if key in (ord('q'), 27):
             break
 
-        if key == ord('a'):
-            current_index = (current_index - 1) % len(colormaps)
-            frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
-        elif key == ord('d'):
-            current_index = (current_index + 1) % len(colormaps)
-            frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
-        elif key == ord('i'):
-            inverted = not inverted
-            frame.add_colors(ColorMap(colormaps[current_index], inverted=inverted))
-        elif key == ord('s'):
-            frame.save_with_dialogue()
+        elif key == ord('m'):
+            if not mod_menu_open:
+                window = SideWindow(frame)
+                window.show()
+                window.updateUi()
+                mod_menu_open = True
+            else:
+                window.close()
+                mod_menu_open = False
 
     cv2.destroyAllWindows()
+
 
 def show_image(
     img: np.ndarray,

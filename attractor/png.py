@@ -32,7 +32,7 @@ def save_to_greyscale(img_array, filename) -> bool:
     except Exception as e:
         return False
 
-def save(img_array, filename) -> bool:
+def save(img_array: NDArray, filename: str) -> bool:
     """
     Save a 3-channel (RGB) or 4-channel (RGBA) high-bit-depth NumPy array as an image using OpenCV.
     - Preserves 16-bit or higher precision.

@@ -28,7 +28,7 @@ class Frame:
     resolution: int = 1000
     percentile: float | list[float] = 99.4
     colors: ColorMap
-    n: int | list[int]
+    n: int
 
     def __post_init__(self):
         # attributes only available after render
@@ -127,15 +127,7 @@ class Frame:
 
         save_to_greyscale(self.img, filename=path)
     
-    def save_with_dialogue(self):
-        path = get_new_png_path()
-        
-        if not path:
-            return
-        
-        save(self.img, filename=path)
-        print(f"save to: {path}")
-        return
+
 
     def save(self, path: str):
         assert self.img is not None, "render before saving!"
@@ -196,6 +188,32 @@ class SimonFrame(Frame):
         a = float(self.a)
         b = float(self.b)
         return f"SimonFrame[{a=}, {b=}] {self.n=} {self.collapsed=}"
+
+
+    def save_with_dialogue(self):
+        path = get_new_png_path()
+        
+        if not path:
+            return
+        
+        save(self.img, filename=path)
+
+        if not os.path.basename(path).startswith("_"):
+            self.saveMetadata(path)
+
+        print(f"save to: {path}")
+        return
+    
+    def saveMetadata(self, pngPath: str):
+        """This method relies on the fact that the png path is unique so this has not to exist yet"""
+        txtPath = pngPath.removesuffix("png") + "txt"
+            
+        with open(txtPath, "w") as f:
+            f.write(f"a: {self.a:4f}\n")
+            f.write(f"b: {self.b:4f}\n")
+            f.write(f"colormap: {self.colors.name} ({self.colors.inverted})\n")
+            f.write(f"percentile: {self.percentile:3f}\n")
+        
 
 
 # @dataclass

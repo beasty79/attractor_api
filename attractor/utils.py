@@ -15,7 +15,7 @@ def get_new_png_path(parent=None, title="Save PNG file"):
     file_path, _ = QFileDialog.getSaveFileName(
         parent,
         title,
-        "",
+        "simon-fraktal",
         "PNG Image (*.png)"
     )
 
