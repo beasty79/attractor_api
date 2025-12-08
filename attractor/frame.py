@@ -107,11 +107,9 @@ class Frame:
     def add_colors(self, colormap: Optional[ColorMap] = None):
         assert self.raw is not None, "Render Frame before adding color to it"
 
-        if colormap is None:
-            self.img = apply_color(self.raw, self.colors) # type: ignore
-        else:
-            self.img = apply_color(self.raw, colormap.get())
+        if colormap is not None:
             self.colors = colormap
+        self.img = apply_color(self.raw, self.colors.get())
 
     def saveAsGeneric(self, path: str):
         """

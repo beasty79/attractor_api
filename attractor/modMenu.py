@@ -153,6 +153,10 @@ class SideWindow(QWidget):
         self.frame.n = tmp_n
         self.frame.resolution = tmp_res
 
+    def update_inverted(self):
+        self.inverted.setChecked(not self.inverted.isChecked())
+        self.frame.add_colors()
+
     def keyboardShortcuts(self):
         # Ctrl+S
         QShortcut(QKeySequence("Ctrl+S"), self, member=lambda: self.save_frame())
@@ -168,6 +172,7 @@ class SideWindow(QWidget):
         QShortcut(QKeySequence(Qt.Key.Key_PageDown), self, member=lambda: self.next_colormap(False))
 
         QShortcut(QKeySequence(Qt.Key.Key_F1), self, member=lambda: self.highResolutionRender())
+        QShortcut(QKeySequence(Qt.Key.Key_I), self, member=lambda: self.update_inverted())
 
     def update_frame(self):
         try:

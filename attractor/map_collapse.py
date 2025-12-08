@@ -1,7 +1,13 @@
+import enum
+from json import tool
+import os
 import matplotlib.pyplot as plt
 import multiprocessing
 from time import sleep
 import numpy as np
+
+from matplotlib.axes import Axes
+from matplotlib.backend_bases import MouseEvent
 
 from .terminal import TerminalCounter
 from .render_class import Performance_Renderer
@@ -70,9 +76,6 @@ def collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], d
     img = apply_colormap(collapseMap, ColorMap("viridis"))
     show_image_matplotlib(img, A, B) # type: ignore
 
-
-
-
 def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float], pathMode: bool = False):
     """
     Display an RGB image using matplotlib with hover coordinates, 
@@ -89,55 +92,68 @@ def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float], pathM
     if img.ndim != 3 or img.shape[2] not in (3, 4):
         raise ValueError("Input image must be RGB or RGBA (HxWx3 or HxWx4).")
 
+    currentPath: list[tuple[float, float]] = []
     # Create two subplots side by side
+    ax1: Axes
+    ax2: Axes
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
+    fig.tight_layout()
 
     # First image
     im1 = ax1.imshow(img, origin='lower')
     ax1.set_title("Original Image")
 
     # Text box for coordinates on hover
-    coord_text = ax1.text(0.02, 0.98, '', color='white',
-                          transform=ax1.transAxes, verticalalignment='top',
-                          bbox=dict(facecolor='black', alpha=0.5, pad=2))
+    coord_text = ax1.text(0.02, 0.98, '', color='white', transform=ax1.transAxes, verticalalignment='top', bbox=dict(facecolor='black', alpha=0.5, pad=2))
 
     # Placeholder for second image
     im2 = ax2.imshow(np.zeros_like(img), origin='lower')
     ax2.set_title("Rendered Frame")
 
     # Mouse hover event for first image
-    def on_mouse_move(event):
-        if event.inaxes == ax1:
-            x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
-            try:
-                x_val = A[x]
-                y_val = B[y]
-                coord_text.set_text(f"a: {x_val:.4f}, b: {y_val:.4f}")
-                fig.canvas.draw_idle()
-            except IndexError:
-                return
-
-            # Render SimonFrame
-            frame = SimonFrame(
-                a=x_val,
-                b=y_val,
-                n=500_000,
-                resolution=500,
-                colors=ColorMap("viridis", True)
-            )
-            frame.render()
-            im2.set_data(frame.img)
-            im2.set_extent([0, frame.img.shape[1], 0, frame.img.shape[0]])
-            ax2.set_aspect('auto')
-            ax2.set_title(f"Rendered Frame (a={x_val:.4f}, b={y_val:.4f})")
-            ax2.set_xlim(0, frame.img.shape[1])
-            ax2.set_ylim(0, frame.img.shape[0])
+    def on_mouse_move(event: MouseEvent):
+        if event.inaxes != ax1:
+            return
+        
+        assert event.xdata
+        assert event.ydata
+        x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
+        try:
+            x_val = A[x]
+            y_val = B[y]
+            coord_text.set_text(f"a: {x_val:.4f}, b: {y_val:.4f}")
             fig.canvas.draw_idle()
+        except IndexError:
+            return
 
+        # Render SimonFrame
+        frame = SimonFrame(
+            a=x_val,
+            b=y_val,
+            n=500_000,
+            resolution=500,
+            colors=ColorMap("viridis", True)
+        )
+        frame.render()
+        im2.set_data(frame.img)
+        im2.set_extent((0, frame.img.shape[1], 0, frame.img.shape[0]))
+        ax2.set_aspect('auto')
+        ax2.set_title(f"Rendered Frame (a={x_val:.4f}, b={y_val:.4f})")
+        ax2.set_xlim(0, frame.img.shape[1])
+        ax2.set_ylim(0, frame.img.shape[0])
+        fig.canvas.draw_idle()
 
     # Click event to render SimonFrame and update second panel
-    def on_click(event):
+    def on_click(event: MouseEvent):
+        toolbar = plt.get_current_fig_manager()
+        if toolbar is not None:
+            toolbar = toolbar.toolbar
+            if toolbar.mode != '': # type: ignore
+                return
+
         if event.inaxes == ax1:
+            assert event.xdata
+            assert event.ydata
             x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
             try:
                 x_val = A[x]
@@ -148,21 +164,39 @@ def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float], pathM
             img[y, x] = [255, 0, 0, 255]
             im1.set_data(img)
             fig.canvas.draw_idle()
+            currentPath.append((round(float(x_val), 4), round(float(y_val), 4)))
 
-            # # Render SimonFrame
-            # frame = SimonFrame(
-            #     a=x_val,
-            #     b=y_val,
-            #     n=3_000_000,
-            #     resolution=1000,
-            #     colors=ColorMap("viridis")
-            # )
-            # frame.render()
-            # frame.show()
+            os.system("cls")
+            for i, (x, y) in enumerate(currentPath):
+                print(f"{i:02d}: {x:2f}, {y:2f}")
+            print(currentPath)
+
+
+    def on_key(event: MouseEvent):
+        assert event.xdata
+        assert event.ydata
+        x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
+        try:
+            x_val = A[x]
+            y_val = B[y]
+        except IndexError:
+            return
+
+        if event.key == "enter":
+            frame = SimonFrame(
+                a=x_val,
+                b=y_val,
+                n=3_000_000,
+                resolution=1000,
+                colors=ColorMap("viridis")
+            )
+            frame.render()
+            frame.show()
 
     # Connect events
-    fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
-    fig.canvas.mpl_connect('button_press_event', on_click)
+    fig.canvas.mpl_connect('motion_notify_event', on_mouse_move) # type: ignore
+    fig.canvas.mpl_connect('button_press_event', on_click) # type: ignore
+    fig.canvas.mpl_connect('key_press_event', on_key) # type: ignore
 
     # Hide axes
     ax1.axis('off')
