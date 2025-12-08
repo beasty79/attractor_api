@@ -38,6 +38,11 @@ class Frame:
         self.collapsed: bool = False
         self._t_start: float = 0
 
+    def clear(self):
+        self.img_ = None
+        self.raw_ = None
+        self.points_per_pixel = None
+
     @property
     def img(self) -> NDArray:
         if self.img_ is not None:
@@ -93,6 +98,7 @@ class Frame:
         non_zero = np.count_nonzero(self.raw)
         thresh = self.resolution ** 2 * 0.05
         self.collapsed = non_zero < thresh
+        return non_zero
     
     def show(self):
         assert self.img is not None, "Render the frame before displaying it!"

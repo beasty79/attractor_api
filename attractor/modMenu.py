@@ -113,7 +113,6 @@ class SideWindow(QWidget):
 
     def arrow_keys(self, key: str):
         delta = 0.01
-        print("arr")
         match key:
             case "up":
                 self.frame.a += delta

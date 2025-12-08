@@ -318,3 +318,33 @@ class Performance_Renderer:
         print(f"Finished render process in {min_:02d}:{sec_:02d}")
         print(f"Average: {self.opts.frames / total:.2f} fps")
         self.writer.save()
+
+    @staticmethod
+    def render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: tuple[int, int], use_counter: bool = True, threads = 10, chunksize=10):
+        if use_counter:
+            counter = TerminalCounter(len(frames))
+            counter.start()
+
+        collapseMap = np.zeros(dtype=np.float16, shape=shape)
+
+        # Multiproccessing
+        with multiprocessing.Pool(threads) as pool:
+            return_value: tuple[int, tuple]
+            for return_value in pool.imap(_render_frame_collapse, frames, chunksize=chunksize):
+                is_collapsed: int = return_value[0]
+                x, y = return_value[1]
+
+                if use_counter and counter is not None:
+                    counter.count_up()
+                    
+                collapseMap[y, x] = is_collapsed
+                # collapseMap[xy[1], xy[0]] = 0 if frame.collapsed else 1
+        return (collapseMap - collapseMap.min()) / (collapseMap.max() - collapseMap.min())
+    
+
+def _render_frame_collapse(args: tuple[Frame, tuple[int, int]]):
+    frame, (x, y) = args
+    frame.render(only_raw=True)
+    is_collapsed = frame.is_collapsed()
+    frame.clear()
+    return is_collapsed, (x, y)
