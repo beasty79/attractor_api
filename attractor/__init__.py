@@ -15,6 +15,7 @@ from .utils import apply_colormap
 from .opts import Option
 from .complex_path import KeyframeInterpolator, Point
 from .generic import color_generic
+from .map_collapse import collapse_map
 
 __version__ = "0.1.0"
 
@@ -23,6 +24,7 @@ __all__ = [
     "KeyframeInterpolator",
     "apply_colormap",
     "color_generic",
+    "collapse_map",
     "squarespace",
     "SimonFrame",
     "ColorMap",

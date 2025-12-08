@@ -1,9 +1,7 @@
-from typing import Optional
 from attractor.modMenu import SideWindow
 from .colormap import ColorMap
-import numpy as np
+from typing import Optional
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 
 if 0 != 0: from attractor.frame import SimonFrame
@@ -173,104 +171,3 @@ def show_image(
 
     cv2.destroyAllWindows()
 
-
-def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float]):
-    """
-    Display an RGB image using matplotlib with hover coordinates, 
-    and show the SimonFrame-rendered image in a second panel on click.
-
-    Args:
-        img (np.ndarray): RGB image as a NumPy array.
-        A (list[float]): Values corresponding to x-axis.
-        B (list[float]): Values corresponding to y-axis.
-    """
-    from .frame import SimonFrame
-    if not isinstance(img, np.ndarray):
-        raise TypeError("Input must be a NumPy ndarray.")
-    if img.ndim != 3 or img.shape[2] not in (3, 4):
-        raise ValueError("Input image must be RGB or RGBA (HxWx3 or HxWx4).")
-
-    # Create two subplots side by side
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 7))
-
-    # First image
-    im1 = ax1.imshow(img, origin='lower')
-    ax1.set_title("Original Image")
-
-    # Text box for coordinates on hover
-    coord_text = ax1.text(0.02, 0.98, '', color='white',
-                          transform=ax1.transAxes, verticalalignment='top',
-                          bbox=dict(facecolor='black', alpha=0.5, pad=2))
-
-    # Placeholder for second image
-    im2 = ax2.imshow(np.zeros_like(img), origin='lower')
-    ax2.set_title("Rendered Frame")
-
-    # Mouse hover event for first image
-    def on_mouse_move(event):
-        if event.inaxes == ax1:
-            x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
-            try:
-                x_val = A[x]
-                y_val = B[y]
-                coord_text.set_text(f"a: {x_val:.4f}, b: {y_val:.4f}")
-                fig.canvas.draw_idle()
-            except IndexError:
-                return
-
-            # Render SimonFrame
-            frame = SimonFrame(
-                a=x_val,
-                b=y_val,
-                n=500_000,
-                resolution=500,
-                colors=ColorMap("viridis", True)
-            )
-            frame.render()
-            im2.set_data(frame.img)
-            im2.set_extent([0, frame.img.shape[1], 0, frame.img.shape[0]])
-            ax2.set_aspect('auto')
-            ax2.set_title(f"Rendered Frame (a={x_val:.4f}, b={y_val:.4f})")
-            ax2.set_xlim(0, frame.img.shape[1])
-            ax2.set_ylim(0, frame.img.shape[0])
-            fig.canvas.draw_idle()
-
-
-    # Click event to render SimonFrame and update second panel
-    def on_click(event):
-        if event.inaxes == ax1:
-            x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
-            try:
-                x_val = A[x]
-                y_val = B[y]
-            except IndexError:
-                return
-
-            # Render SimonFrame
-            frame = SimonFrame(
-                a=x_val,
-                b=y_val,
-                n=3_000_000,
-                resolution=1000,
-                colors=ColorMap("viridis")
-            )
-            frame.render()
-            frame.show()
-
-            # im2.set_data(frame.img)
-            # im2.set_extent([0, frame.img.shape[1], 0, frame.img.shape[0]])
-            # ax2.set_aspect('auto')
-            # ax2.set_title(f"Rendered Frame (a={x_val:.4f}, b={y_val:.4f})")
-            # ax2.set_xlim(0, frame.img.shape[1])
-            # ax2.set_ylim(0, frame.img.shape[0])
-            # fig.canvas.draw_idle()
-
-    # Connect events
-    fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
-    fig.canvas.mpl_connect('button_press_event', on_click)
-
-    # Hide axes
-    ax1.axis('off')
-    ax2.axis('off')
-
-    plt.show()
