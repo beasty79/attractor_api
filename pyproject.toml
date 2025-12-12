@@ -1,6 +1,6 @@
 [project]
 name = "attractor-tools"
-version = "0.2.0"
+version = "0.2.1"
 description = "An API to animate the Simon fractal"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -22,7 +22,7 @@ dependencies = [
   "matplotlib",
   "numpy",
   "numba",
-  "opencv-python"
+  "opencv-python",
   "pyqt6"
 ]
 
