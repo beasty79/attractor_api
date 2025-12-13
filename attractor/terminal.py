@@ -20,7 +20,7 @@ class TerminalCounter:
             self.i += 1
             self._update_terminal()
             if self.i == self.max_i:
-                sys.stdout.write("\n")
+                self.end()
 
     def eta(self):
         if self.i == 0:
@@ -45,3 +45,15 @@ class TerminalCounter:
         if elapsed == 0:
             return 0
         return self.i / elapsed
+    
+    def end(self):
+        total_seconds = (datetime.now() - self.timestamp_start).total_seconds()
+        avg_fps = self.i / total_seconds if total_seconds > 0 else 0.0
+
+        # Clear progress line and print final stats
+        sys.stdout.write(
+            f"\rRendered {self.i} Frames "
+            f"in {str(datetime.now() - self.timestamp_start).split('.')[0]} "
+            f"({avg_fps:.1f} fps)\033[K\n"
+        )
+        sys.stdout.flush()
