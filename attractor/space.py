@@ -19,7 +19,7 @@ class Waveform(Enum):
 def linspace(lower: float, upper: float, n: int):
     """
     [equals np.linspace]
-    Parameters: 
+    Parameters:
     - lower (float): The minimum value.
     - upper (float): The maximum value.
     - n (int): Number of points in the output array.
@@ -30,11 +30,11 @@ def linspace(lower: float, upper: float, n: int):
     return np.linspace(lower, upper, n)
 
 def bpmspace(
-        lower: float, 
-        upper: float, 
-        n: int, 
-        bpm: int, 
-        fps: int, 
+        lower: float,
+        upper: float,
+        n: int,
+        bpm: int,
+        fps: int,
         waveform: Waveform = Waveform.Sine,
         absolute=True):
     """
@@ -185,11 +185,11 @@ def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty:
 
     # A = A.ravel()
     B = B.ravel()
-    
+
     opts = Option(
-        fps=fps, 
-        frames=len(A), 
-        resolution=resolution, 
+        fps=fps,
+        frames=len(A),
+        resolution=resolution,
         colormap=colormap
     )
 
@@ -201,17 +201,4 @@ def map_area(a: NDArray, b: NDArray, fname: str, colormap: ColorMap, skip_empty:
     )
     process.set_static("a", False)
     process.set_static("b", False)
-    process.start_render_process(fname, verbose_image=True, threads=4, chunksize=8, skip_empty_frames=skip_empty)
-
-
-def from_generic(path: str, colormap: ColorMap):
-    # new filepath with colormap suffix
-    suffix = "_inv" if colormap.inverted else ""
-    fname = os.path.basename(path).replace(".mp4", "")
-    fname = f"{fname}_{colormap.name}{suffix}.mp4"
-    new_path = os.path.join(os.path.dirname(path), fname)
-    print("export_path: ", new_path)
-
-
-    # writer = VideoFileWriter()
-    ...
+    process.start_render_process(fname, verbose_image=True, skip_empty_frames=skip_empty)

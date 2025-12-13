@@ -1,34 +1,93 @@
+from dataclasses import dataclass
+from typing import Optional
 from matplotlib.backend_bases import MouseEvent
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 import multiprocessing
 from time import sleep
 import numpy as np
+import pickle
 import os
 
 from .terminal import TerminalCounter
 from .frame import Frame, SimonFrame
 from .utils import apply_colormap
 from .colormap import ColorMap
+from .config import Config
+
+@dataclass
+class CollapseContainer:
+    img: np.ndarray
+    a: np.ndarray
+    b: np.ndarray
+
+class CollapseMap:
+    _data: Optional[CollapseContainer] = None
+
+    def __init__(self, a_bounds: tuple[float, float], b_bounds: tuple[float, float], delta: float, data=None) -> None:
+        self._a_bounds = a_bounds
+        self._b_bounds = b_bounds
+        self._delta = delta
+        self._data = data
+
+    def save(self, filename: str):
+        """Save the CollapseMap object as a pickle file."""
+        assert self._data is not None, "Render before saving it!"
+
+        if not filename.endswith(".pkl"):
+            filename += ".pkl"
+
+        with open(filename, 'wb') as f:
+            pickle.dump(self._data, f)
+
+    @classmethod
+    def load(cls, filename: str) -> "CollapseMap":
+        """Load a data object from a pickle file."""
+        if not os.path.exists(filename):
+            filename = filename + ".pkl"
+        if not os.path.exists(filename):
+            raise FileNotFoundError()
+
+        with open(filename, 'rb') as f:
+            data: CollapseContainer = pickle.load(f)
+
+        delta = abs(data.a[0] - data.a[1])
+        a_bounds = data.a[0], data.a[-1]
+        b_bounds = data.b[0], data.b[-1]
+
+        return cls(a_bounds, b_bounds, delta, data)
+
+    def show(self):
+        """Show the map with matplotlib (only works afer render())"""
+        assert self._data is not None, "render first"
+        show_collapse_map(self._data)
+
+    def render(self):
+        """Render all frames with current paramters"""
+        self._data = render_collapse_map(
+            a_bounds=self._a_bounds,
+            b_bounds=self._b_bounds,
+            delta=self._delta
+        )
 
 
-def _render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: tuple[int, int], use_counter: bool = True, threads = 10, chunksize=10):
+
+def _render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: tuple[int, int], use_counter: bool = True):
     if use_counter:
         counter = TerminalCounter(len(frames))
         counter.start()
 
     collapseMap = np.zeros(dtype=np.float16, shape=shape)
 
-    # Render Process
-    with multiprocessing.Pool(threads) as pool:
-        return_value: tuple[int, tuple]
-        for return_value in pool.imap(_render_frame_collapse_wrapper, frames, chunksize=chunksize):
+    return_value: tuple[int, tuple]
+    with multiprocessing.Pool(Config().threads) as pool:
+        for return_value in pool.imap(_render_frame_collapse_wrapper, frames, chunksize=Config().chunksize):
             is_collapsed: int = return_value[0]
             x, y = return_value[1]
 
             if use_counter and counter is not None:
                 counter.count_up()
-                
+
             collapseMap[y, x] = is_collapsed
     return (collapseMap - collapseMap.min()) / (collapseMap.max() - collapseMap.min())
 
@@ -41,7 +100,7 @@ def _render_frame_collapse_wrapper(args: tuple[Frame, tuple[int, int]]):
     return is_collapsed, (x, y)
 
 
-def collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], delta: float=0.01, threads=8, chunksize=8):
+def render_collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], delta: float=0.01):
     a_diff = abs(a_bounds[0] - a_bounds[1])
     b_diff = abs(b_bounds[0] - b_bounds[1])
     na: int = round(a_diff / delta)
@@ -65,26 +124,12 @@ def collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], d
             )
             frames.append((frame, (x, y)))
 
-    collapseMap = _render_frames_collapse(frames, shape=(len(B), len(A)), threads=threads, chunksize=chunksize)
+    collapseMap = _render_frames_collapse(frames, shape=(len(B), len(A)))
     img = apply_colormap(collapseMap, ColorMap("viridis"))
-    show_image_matplotlib(img, A, B) # type: ignore
+    return CollapseContainer(img, A, B)
 
-def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float], pathMode: bool = False):
-    """
-    Display an RGB image using matplotlib with hover coordinates, 
-    and show the SimonFrame-rendered image in a second panel on click.
-
-    Args:
-        img (np.ndarray): RGB image as a NumPy array.
-        A (list[float]): Values corresponding to x-axis.
-        B (list[float]): Values corresponding to y-axis.
-    """
+def show_collapse_map(map: CollapseContainer):
     from .frame import SimonFrame
-    if not isinstance(img, np.ndarray):
-        raise TypeError("Input must be a NumPy ndarray.")
-    if img.ndim != 3 or img.shape[2] not in (3, 4):
-        raise ValueError("Input image must be RGB or RGBA (HxWx3 or HxWx4).")
-
     currentPath: list[tuple[float, float]] = []
     # Create two subplots side by side
     ax1: Axes
@@ -93,27 +138,27 @@ def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float], pathM
     fig.tight_layout()
 
     # First image
-    im1 = ax1.imshow(img, origin='lower')
+    im1 = ax1.imshow(map.img, origin='lower')
     ax1.set_title("Original Image")
 
     # Text box for coordinates on hover
     coord_text = ax1.text(0.02, 0.98, '', color='white', transform=ax1.transAxes, verticalalignment='top', bbox=dict(facecolor='black', alpha=0.5, pad=2))
 
     # Placeholder for second image
-    im2 = ax2.imshow(np.zeros_like(img), origin='lower')
+    im2 = ax2.imshow(np.zeros_like(map.img), origin='lower')
     ax2.set_title("Rendered Frame")
 
     # Mouse hover event for first image
     def on_mouse_move(event: MouseEvent):
         if event.inaxes != ax1:
             return
-        
+
         assert event.xdata
         assert event.ydata
         x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
         try:
-            x_val = A[x]
-            y_val = B[y]
+            x_val = map.a[x]
+            y_val = map.b[y]
             coord_text.set_text(f"a: {x_val:.4f}, b: {y_val:.4f}")
             fig.canvas.draw_idle()
         except IndexError:
@@ -149,13 +194,13 @@ def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float], pathM
             assert event.ydata
             x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
             try:
-                x_val = A[x]
-                y_val = B[y]
+                x_val = map.a[x]
+                y_val = map.b[y]
             except IndexError:
                 return
 
-            img[y, x] = [255, 0, 0, 255]
-            im1.set_data(img)
+            map.img[y, x] = [255, 0, 0, 255]
+            im1.set_data(map.img)
             fig.canvas.draw_idle()
             currentPath.append((round(float(x_val), 4), round(float(y_val), 4)))
 
@@ -170,8 +215,8 @@ def show_image_matplotlib(img: np.ndarray, A: list[float], B: list[float], pathM
         assert event.ydata
         x, y = int(event.xdata + 0.5), int(event.ydata + 0.5)
         try:
-            x_val = A[x]
-            y_val = B[y]
+            x_val = map.a[x]
+            y_val = map.b[y]
         except IndexError:
             return
 

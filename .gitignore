@@ -28,6 +28,7 @@ playground.py
 .coverage
 .tox/
 *.json
+*.pkl
 .nox/
 pytest_cache/
 

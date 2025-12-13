@@ -10,12 +10,13 @@ from .space import (
     squarespace,
     Waveform
 )
+from .config import Config
 from .frame import Frame, SimonFrame
 from .utils import apply_colormap
 from .opts import Option
 from .complex_path import KeyframeInterpolator, Point
 from .generic import color_generic
-from .map_collapse import collapse_map
+from .map_collapse import render_collapse_map, CollapseMap
 
 __version__ = "0.1.0"
 
@@ -24,7 +25,7 @@ __all__ = [
     "KeyframeInterpolator",
     "apply_colormap",
     "color_generic",
-    "collapse_map",
+    "render_collapse_map",
     "squarespace",
     "SimonFrame",
     "ColorMap",
@@ -37,5 +38,7 @@ __all__ = [
     "Option",
     "Frame",
     "Point",
-    "Waveform"
+    "Waveform",
+    "Config",
+    "CollapseMap"
 ]

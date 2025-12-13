@@ -6,6 +6,8 @@ from time import time
 import os
 from json import dump, dumps
 import numpy as np
+
+from attractor.config import Config
 from .file_writer import VideoFileWriter
 from .terminal import TerminalCounter
 from .utils import promt
@@ -158,10 +160,10 @@ class Performance_Renderer:
         frame.show()
 
     def show_demo(
-            self, 
-            nth_frame: int = 10, 
-            real_time: bool = False, 
-            resolution: int = 750, 
+            self,
+            nth_frame: int = 10,
+            real_time: bool = False,
+            resolution: int = 750,
             iterations: int = 500_000,
             fps: Optional[int] = None
         ):
@@ -177,7 +179,7 @@ class Performance_Renderer:
         self.fps = round(self.fps / self._demo_var)
 
         # render demo video
-        self.start_render_process("./tmp.mp4", verbose_image=True, bypass_confirm=True, threads=8, chunksize=8)
+        self.start_render_process("./tmp.mp4", verbose_image=True, bypass_confirm=True)
 
         fps_ = fps if fps is not None else 10
         play_video("./tmp.mp4", self.fps if real_time else fps_)
@@ -185,7 +187,7 @@ class Performance_Renderer:
         # rechange variables
         self.fps = fps_cache
         self._demo = False
-    
+
     @property
     def frames(self) -> list[SimonFrame]:
         """Helper function"""
@@ -207,7 +209,7 @@ class Performance_Renderer:
             )
             for i in range(len(res))
         ]
-    
+
     @property
     def demoFrames(self) -> list[SimonFrame]:
         """Helper function"""
@@ -235,8 +237,6 @@ class Performance_Renderer:
             self,
             fname: str,
             verbose_image: bool    = False,
-            threads: Optional[int] = 4,
-            chunksize: int         = 4,
             skip_empty_frames: bool= True,
             bypass_confirm: bool   = False,
             save_as_generic: bool  = False,
@@ -248,8 +248,6 @@ class Performance_Renderer:
         Args:
             fname (str): filename / filepath
             verbose_image (bool, optional): adds a small text with the parameter per frame. Defaults to False.
-            threads (Optional[int], optional): cpu cores to use. Defaults to 4.
-            chunksize (int, optional): the higher the chunksize the more efficient but it needs more memory. Defaults to 4.
             skip_empty_frames (bool, optional): skips frames wheree the fractal collapses. Defaults to True.
             bypass_confirm (bool, optional): bypass the terminal confirmation. Defaults to False.
             save_as_generic (bool, optional): saves as grey space image so it can be loaded and colored again without the need to render it again. Defaults to False.
@@ -265,7 +263,7 @@ class Performance_Renderer:
 
         if not bypass_confirm:
             promt(len(frames), self.fps)
-        
+
         # Verify filename / Ready Filewriter
         if not fname.lower().endswith('.mp4'):
             fname += '.mp4'
@@ -288,9 +286,9 @@ class Performance_Renderer:
 
         # Multiproccessing
         try:
-            with multiprocessing.Pool(threads) as pool:
+            with multiprocessing.Pool(Config().threads) as pool:
                 frame: Frame
-                for i, frame in enumerate(pool.imap(render_frame, frames, chunksize=chunksize)):
+                for i, frame in enumerate(pool.imap(render_frame, frames, chunksize=Config().chunksize)):
 
                     # Either emit a Signal (pyqt6 hook) or show the progress-bar in the Terminal
                     if self.hook is not None:
