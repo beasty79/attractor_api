@@ -1,9 +1,9 @@
 [project]
 name = "attractor-tools"
 version = "0.2.1"
-description = "An API to animate the Simon fractal"
+description = "An API to animate the Simon attractor"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9,<3.13"
 license = { text = "MIT" }
 
 authors = [

@@ -7,7 +7,7 @@ from .terminal import TerminalCounter
 from typing import Generator
 import os
 
-def frames_from_video(path: str) -> Generator[np.typing.NDArray]:
+def frames_from_video(path: str) -> Generator[np.typing.NDArray, None, None]:
     """
     Generator that yields grayscale frames (np.ndarray) from an mp4 video.
     """
@@ -30,7 +30,7 @@ def frames_from_video(path: str) -> Generator[np.typing.NDArray]:
 def color_generic(path: str, colormap: ColorMap, fps: int = 10, frames=2800):
     folder = os.path.dirname(path)
     fname = os.path.basename(path)
-    export_path = os.path.join(folder, f"{fname.split(".")[0]}-{colormap.name}.mp4")
+    export_path = os.path.join(folder, f"{fname.split('.')[0]}-{colormap.name}.mp4")
 
     videowriter = VideoFileWriter(export_path, fps)
 

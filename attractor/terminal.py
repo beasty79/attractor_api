@@ -37,8 +37,7 @@ class TerminalCounter:
         fps_val = f"{self.fps():.1f}"
         line = f"[{bar}] {self.i}/{self.max_i} ETA: {self.eta()} ({fps_val} fps)"
 
-        padded_line = line.ljust(80)
-        sys.stdout.write(f"\r{padded_line}")
+        sys.stdout.write("\r" + line + "\033[K")
         sys.stdout.flush()
 
     def fps(self):

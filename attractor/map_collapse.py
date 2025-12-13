@@ -1,32 +1,28 @@
-import enum
-from json import tool
-import os
+from matplotlib.backend_bases import MouseEvent
+from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 import multiprocessing
 from time import sleep
 import numpy as np
-
-from matplotlib.axes import Axes
-from matplotlib.backend_bases import MouseEvent
+import os
 
 from .terminal import TerminalCounter
-from .render_class import Performance_Renderer
 from .frame import Frame, SimonFrame
 from .utils import apply_colormap
 from .colormap import ColorMap
 
 
-def render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: tuple[int, int], use_counter: bool = True, threads = 10, chunksize=10):
+def _render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: tuple[int, int], use_counter: bool = True, threads = 10, chunksize=10):
     if use_counter:
         counter = TerminalCounter(len(frames))
         counter.start()
 
     collapseMap = np.zeros(dtype=np.float16, shape=shape)
 
-    # Multiproccessing
+    # Render Process
     with multiprocessing.Pool(threads) as pool:
         return_value: tuple[int, tuple]
-        for return_value in pool.imap(_render_frame_collapse, frames, chunksize=chunksize):
+        for return_value in pool.imap(_render_frame_collapse_wrapper, frames, chunksize=chunksize):
             is_collapsed: int = return_value[0]
             x, y = return_value[1]
 
@@ -34,11 +30,10 @@ def render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: t
                 counter.count_up()
                 
             collapseMap[y, x] = is_collapsed
-            # collapseMap[xy[1], xy[0]] = 0 if frame.collapsed else 1
     return (collapseMap - collapseMap.min()) / (collapseMap.max() - collapseMap.min())
 
 
-def _render_frame_collapse(args: tuple[Frame, tuple[int, int]]):
+def _render_frame_collapse_wrapper(args: tuple[Frame, tuple[int, int]]):
     frame, (x, y) = args
     frame.render(only_raw=True)
     is_collapsed = frame.is_collapsed()
@@ -46,7 +41,7 @@ def _render_frame_collapse(args: tuple[Frame, tuple[int, int]]):
     return is_collapsed, (x, y)
 
 
-def collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], delta: float=0.01):
+def collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], delta: float=0.01, threads=8, chunksize=8):
     a_diff = abs(a_bounds[0] - a_bounds[1])
     b_diff = abs(b_bounds[0] - b_bounds[1])
     na: int = round(a_diff / delta)
@@ -56,9 +51,7 @@ def collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], d
 
     print(f"{len(A)}x{len(B)}   frames: {len(A)*len(B)}")
     sleep(1.5)
-    # input("press Enter to continue")
 
-    # collapseMap = np.zeros(dtype=np.float16, shape=(len(A), len(B)))
     frames: list[tuple[Frame, tuple]] = []
     colomap = ColorMap("viridis")
     for x, a in enumerate(A):
@@ -72,7 +65,7 @@ def collapse_map(a_bounds: tuple[float, float], b_bounds: tuple[float, float], d
             )
             frames.append((frame, (x, y)))
 
-    collapseMap = Performance_Renderer.render_frames_collapse(frames, shape=(len(B), len(A)), threads=14, chunksize=12)
+    collapseMap = _render_frames_collapse(frames, shape=(len(B), len(A)), threads=threads, chunksize=chunksize)
     img = apply_colormap(collapseMap, ColorMap("viridis"))
     show_image_matplotlib(img, A, B) # type: ignore
 
