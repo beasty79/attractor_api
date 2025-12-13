@@ -87,6 +87,18 @@ def generic_example():
 
 def mapping_all_stable_points():
 
+    # Renders a map that shows were the attractor is stabel (not empty)
+    # This attractor loops every 6.5 units
+    map = CollapseMap(
+        a_bounds=(0, 6.5),
+        b_bounds=(0, 6.5),
+        delta=0.01  # the smaller the delta the more pixels rendered
+    )
+    map.render()
+    map.save("test")
+    map.show()  # show interactive map with matplotlib
+
+    map.load("test.pkl")  # load a save
 
 
 
