@@ -1,5 +1,5 @@
 from attractor import (
-    sinspace, Performance_Renderer, ColorMap, Option, KeyframeInterpolator, Point, color_generic, CollapseMap
+    sinspace, Performance_Renderer, ColorMap, Option, KeyframeInterpolator, Point, color_generic, CollapseMap, Config
 )
 
 def main():
@@ -104,6 +104,10 @@ def mapping_all_stable_points():
 
 if __name__ == "__main__":
     # see all colormaps available
+    gloabal_config = Config()
+    gloabal_config.threads = 4  # dont use all cores (optimal around 2/3 of cores)
+    gloabal_config.chunksize = 8  # depending on how much memory available
+
     print(ColorMap.colormaps())
     # main()
     #keyframe_example()
