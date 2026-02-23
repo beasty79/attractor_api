@@ -5,8 +5,8 @@ from attractor import (
 def main():
     # Here You define the main properties of a video render
     opts = Option(
-        fps=10,
-        frames=100,
+        fps=30,
+        frames=10000,
         resolution=1000,
         colormap=ColorMap("viridis")
     )
@@ -14,7 +14,7 @@ def main():
     # array with values from lower to upper using a sinewave (p=1)
     # a, b are the initial values of the system used in the attractor
     # To animate this, at least one of these parameters should change each frame
-    a = sinspace(0.32, 0.4, 300)
+    a = sinspace(0.32, 0.4, opts.frames)
 
 
 
@@ -24,6 +24,7 @@ def main():
         opts=opts,
         a=a,
         b=1.5,
+        iterations=4_000_000
     )
 
     # Important: 'a' is an array of values, one per frame (a[i] used for frame i)
@@ -32,11 +33,11 @@ def main():
 
     # Show a lower resolution and frames preview
     # opens the demo via opencv and loops until u press Esc or close the window
-    renderer.show_demo()
+    # renderer.show_demo()
 
     # Set how many processes/threads to use (via multiprocessing.Pool)
     # Use None for unlimited; here we use 4 threads with a chunk size of 4
-    # renderer.start_render_process("./your_filename.mp4", threads=4, chunksize=4)
+    renderer.start_render_process("./your_filename.mp4")
 
 
 def keyframe_example():
@@ -105,9 +106,9 @@ def mapping_all_stable_points():
 if __name__ == "__main__":
     # see all colormaps available
     gloabal_config = Config()
-    gloabal_config.threads = 4  # dont use all cores (optimal around 2/3 of cores)
+    gloabal_config.threads = 8  # dont use all cores (optimal around 2/3 of cores)
     gloabal_config.chunksize = 8  # depending on how much memory available
 
     print(ColorMap.colormaps())
-    # main()
+    main()
     #keyframe_example()

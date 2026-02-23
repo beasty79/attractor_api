@@ -23,6 +23,7 @@ playground.py
 
 # PyCharm
 *.iml
+*.txt
 
 # Testing
 .coverage

@@ -37,6 +37,7 @@ class Frame:
         self.points_per_pixel = None
         self.collapsed: bool = False
         self._t_start: float = 0
+        self.alphaThreshold = 0
 
     def clear(self):
         self.img_ = None
@@ -75,8 +76,11 @@ class Frame:
         if not only_raw and self.raw is not None:
             if isinstance(self.colors, list):
                 raise Exception()
-            self.img = apply_color(self.raw, self.colors.get())
-        
+
+            colors = self.colors.get()
+            print(colors.shape)
+            self.img = apply_color(self.raw, colors)
+
         return DeltaTime(time() - self._t_start)
 
     def scatter_to_normalized(self, x_raw, y_raw):
@@ -99,7 +103,7 @@ class Frame:
         thresh = self.resolution ** 2 * 0.05
         self.collapsed = non_zero < thresh
         return non_zero
-    
+
     def show(self):
         assert self.img is not None, "Render the frame before displaying it!"
         show_image(self.img)
@@ -130,7 +134,7 @@ class Frame:
         path = f"{path_}.png"
 
         save_to_greyscale(self.img, filename=path)
-    
+
 
 
     def save(self, path: str):
@@ -169,7 +173,7 @@ class SimonFrame(Frame):
         self.points_per_pixel = self.scatter_to_normalized(x, y)
         self.raw = self.normalize(self.points_per_pixel)
         return super().render(only_raw=only_raw)
-        
+
     @staticmethod
     def loadFromGeneric(path: str) -> "SimonFrame":
         # shell Frame
@@ -183,7 +187,7 @@ class SimonFrame(Frame):
         )
         frame.raw = normalize_array(loadpng(path))
         return frame
-    
+
     def show(self):
         show_frame(self)
 
@@ -196,10 +200,10 @@ class SimonFrame(Frame):
 
     def save_with_dialogue(self):
         path = get_new_png_path()
-        
+
         if not path:
             return
-        
+
         save(self.img, filename=path)
 
         if not os.path.basename(path).startswith("_"):
@@ -207,17 +211,17 @@ class SimonFrame(Frame):
 
         print(f"save to: {path}")
         return
-    
+
     def saveMetadata(self, pngPath: str):
         """This method relies on the fact that the png path is unique so this has not to exist yet"""
         txtPath = pngPath.removesuffix("png") + "txt"
-            
+
         with open(txtPath, "w") as f:
             f.write(f"a: {self.a:4f}\n")
             f.write(f"b: {self.b:4f}\n")
             f.write(f"colormap: {self.colors.name} ({self.colors.inverted})\n")
             f.write(f"percentile: {self.percentile:3f}\n")
-        
+
 
 
 # @dataclass

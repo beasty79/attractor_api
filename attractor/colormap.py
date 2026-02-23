@@ -17,7 +17,14 @@ class ColorMap:
         color_map = plt.get_cmap(cmap)
         linear = np.linspace(0, 1, 256)
         return color_map(linear)
-    
+
+    def get_8bit_precalc(self) -> NDArray:
+        color_map = plt.get_cmap(self.name)
+        linear = np.arange(256, dtype=np.uint8)
+        colors: NDArray = color_map(linear) * 255
+        colors = colors.astype(np.uint8)
+        return colors.tolist()
+
     def change_color_entry(self, i_start: int, i_end: int, hexcolor: str) -> None:
         """
         Manipulate a specific part of a colormap.

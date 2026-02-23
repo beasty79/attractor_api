@@ -50,7 +50,7 @@ class Performance_Renderer:
         self.writer = None
         self.color = None
         self.counter: TerminalCounter | None = None
-        self.colormap: ColorMap = opts.colormap
+        self.colormap: Optional[ColorMap] = opts.colormap
         self.hook: None = None
         self._demo = False
 
@@ -72,7 +72,7 @@ class Performance_Renderer:
                 value = value.tolist()
 
             return value
-
+        assert self.opts.colormap is not None, "No Colormap given"
         data = {
             "fps": self.fps,
             "frames": self.opts.frames,
@@ -256,6 +256,7 @@ class Performance_Renderer:
         b: list[float] = self.get_iter_value("b")
 
         if save_as_generic:
+            assert self.colormap is not None
             self.colormap.set_greysscale(True)
 
         # Generate SimonFrame Dataclass

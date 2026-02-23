@@ -24,10 +24,12 @@ class CollapseContainer:
 class CollapseMap:
     _data: Optional[CollapseContainer] = None
 
-    def __init__(self, a_bounds: tuple[float, float], b_bounds: tuple[float, float], delta: float, data=None) -> None:
+    def __init__(self, a_bounds: tuple[float, float], b_bounds: tuple[float, float], delta: Optional[float] = None, data=None, pixel=None) -> None:
         self._a_bounds = a_bounds
         self._b_bounds = b_bounds
         self._delta = delta
+        if pixel is not None and delta is None:
+            self._delta = abs(a_bounds[0] - a_bounds[1]) / pixel
         self._data = data
 
     def save(self, filename: str):
@@ -39,6 +41,12 @@ class CollapseMap:
 
         with open(filename, 'wb') as f:
             pickle.dump(self._data, f)
+
+    def save_as_png(self, name: str):
+        from PIL import Image
+        assert self._data is not None
+        image = Image.fromarray(self._data.img)
+        image.save(f"{name}.png")
 
     @classmethod
     def load(cls, filename: str) -> "CollapseMap":
@@ -64,6 +72,7 @@ class CollapseMap:
 
     def render(self):
         """Render all frames with current paramters"""
+        assert self._delta, "set delta!"
         self._data = render_collapse_map(
             a_bounds=self._a_bounds,
             b_bounds=self._b_bounds,
@@ -73,6 +82,7 @@ class CollapseMap:
 
 
 def _render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: tuple[int, int], use_counter: bool = True):
+    counter = None
     if use_counter:
         counter = TerminalCounter(len(frames))
         counter.start()
@@ -85,7 +95,7 @@ def _render_frames_collapse(frames: list[tuple[Frame, tuple[int, int]]], shape: 
             is_collapsed: int = return_value[0]
             x, y = return_value[1]
 
-            if use_counter and counter is not None:
+            if counter and counter is not None:
                 counter.count_up()
 
             collapseMap[y, x] = is_collapsed
