@@ -9,7 +9,7 @@ from .utils import apply_color, get_new_png_path
 from .view import show_frame, show_image
 from .colormap import ColorMap
 from .png import save_to_greyscale , loadpng, normalize_array, save
-
+from .attractor import simon
 
 @dataclass
 class DeltaTime():
@@ -29,6 +29,7 @@ class Frame:
     percentile: float | list[float] = 99.4
     colors: ColorMap
     n: int
+    alphaThreshold: int = 0
 
     def __post_init__(self):
         # attributes only available after render
@@ -37,7 +38,6 @@ class Frame:
         self.points_per_pixel = None
         self.collapsed: bool = False
         self._t_start: float = 0
-        self.alphaThreshold = 0
 
     def clear(self):
         self.img_ = None
@@ -78,9 +78,13 @@ class Frame:
                 raise Exception()
 
             colors = self.colors.get()
-            print(colors.shape)
+            if self.alphaThreshold > 0:
+                a = 0
+                for i in range(self.alphaThreshold):
+                    c = colors[i]
+                    colors[i] = (c[0], c[1], c[2], a)
+                    a += 1/self.alphaThreshold
             self.img = apply_color(self.raw, colors)
-
         return DeltaTime(time() - self._t_start)
 
     def scatter_to_normalized(self, x_raw, y_raw):
@@ -159,7 +163,6 @@ class SimonFrame(Frame):
     b: float
 
     def render(self, only_raw = False) -> DeltaTime:
-        from .attractor import simon
 
         if isinstance(self.a, list) or isinstance(self.b, list):
             raise ValueError("a or b are a list, when using lists for assignment call .toFrames() first")
@@ -183,7 +186,7 @@ class SimonFrame(Frame):
             colors=None, # type: ignore
             n=0,
             a=0,
-            b=0
+            b=0,
         )
         frame.raw = normalize_array(loadpng(path))
         return frame

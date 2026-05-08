@@ -13,7 +13,7 @@ class KeyframeInterpolator:
     opts: Option
     first_value: float
     last_value: float
-    
+
     def __post_init__(self):
         self.points: dict[int, float] = {}
         self.points[0] = self.first_value
@@ -47,3 +47,35 @@ class KeyframeInterpolator:
                 i += 1
 
         return empty_arr
+
+
+def resample_by_frames(points: np.ndarray, frames: int):
+    """
+    Resample a 2D polyline so it contains exactly `frames`
+    equally spaced points along arc length.
+    """
+
+    points = np.asarray(points, dtype=float)
+
+    if len(points) < 2:
+        raise ValueError("Need at least two points")
+
+    # Compute cumulative arc length
+    deltas = np.diff(points, axis=0)
+    segment_lengths = np.linalg.norm(deltas, axis=1)
+    cumulative_length = np.insert(np.cumsum(segment_lengths), 0, 0.0)
+
+    total_length = cumulative_length[-1]
+
+    if total_length == 0:
+        # All points identical
+        return np.repeat(points[:1], frames, axis=0)
+
+    # Evenly spaced target arc lengths
+    target_distances = np.linspace(0, total_length, frames)
+
+    # Interpolate x and y independently over arc length
+    x = np.interp(target_distances, cumulative_length, points[:, 0])
+    y = np.interp(target_distances, cumulative_length, points[:, 1])
+
+    return np.column_stack((x, y))

@@ -57,6 +57,7 @@ def show_frame(frame: "SimonFrame"):
 
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
+    width, height = 100, 100
     # Bild auf gewünschte Auflösung skalieren
     if resolution is not None:
         if len(resolution) != 2:
@@ -70,10 +71,6 @@ def show_frame(frame: "SimonFrame"):
     window_name = "window"
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(window_name, 1000, 1000)
-
-    colormaps: list[str] = ColorMap.colormaps()
-    current_index = colormaps.index(frame.colors.name)
-    inverted = frame.colors.inverted
 
     mod_menu_open = False
 
@@ -113,7 +110,7 @@ def show_frame(frame: "SimonFrame"):
                 window.updateUi()
                 mod_menu_open = True
             else:
-                window.close()
+                window.close() # type: ignore
                 mod_menu_open = False
 
     cv2.destroyAllWindows()

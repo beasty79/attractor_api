@@ -97,7 +97,7 @@ def save_grayscale_32bit_int(array: np.ndarray, filename: str):
         array (np.ndarray): NumPy Array der Form (width, height) mit Werten als uint32
         filename (str): Pfad zum Speicherort, z.B. 'bild.tiff'
     """
-    if ".tiff" not in filename: 
+    if ".tiff" not in filename:
         filename += ".tiff"
 
     if array.ndim != 2:
@@ -106,7 +106,7 @@ def save_grayscale_32bit_int(array: np.ndarray, filename: str):
     # In int32 umwandeln (Pillow verwendet signed 32-Bit)
     if array.dtype != np.uint32:
         array = array.astype(np.uint32)
-    
+
     # Pillow braucht int32 für 'I', also casten
     array_signed = array.view(np.int32)
 

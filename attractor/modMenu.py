@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QComboBox, QLineEdit, QCheckBox, QHBoxLayout
 from PyQt6.QtGui import QKeySequence, QShortcut
+import numpy
 from .colormap import ColorMap
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QRegularExpressionValidator, QIntValidator
 from PyQt6.QtCore import QRegularExpression, QTimer
 if 0 != 0: from .frame import SimonFrame
@@ -33,6 +34,8 @@ class SideWindow(QWidget):
         self.colormap.addItems(ColorMap.colormaps())
         self.colormap.setCurrentText(self.frame.colors.name)
         self.inverted = QCheckBox("")
+        self.flipX = QCheckBox("")
+        self.flipY = QCheckBox("")
 
         # Labels
         label_a = QLabel("a: ")
@@ -41,6 +44,8 @@ class SideWindow(QWidget):
         label_resolution = QLabel("resolution: ")
         label_colormap = QLabel("colormap: ")
         label_percentile = QLabel("percentile: ")
+        label_flipx = QLabel("flip-x: ")
+        label_flipy = QLabel("flip-y: ")
 
         w = 80
         label_a.setFixedWidth(w)
@@ -49,12 +54,15 @@ class SideWindow(QWidget):
         label_resolution.setFixedWidth(w)
         label_colormap.setFixedWidth(w)
         label_percentile.setFixedWidth(w)
+        label_flipx.setFixedWidth(w)
+        label_flipy.setFixedWidth(w)
 
         # Layout Structure
         layout_colormap = QHBoxLayout()
         layout_colormap.addWidget(label_colormap)
         layout_colormap.addWidget(self.colormap)
         layout_colormap.addWidget(self.inverted)
+
 
         a_layout = QHBoxLayout()
         a_layout.addWidget(label_a)
@@ -75,7 +83,16 @@ class SideWindow(QWidget):
         percentile_layout = QHBoxLayout()
         percentile_layout.addWidget(label_percentile)
         percentile_layout.addWidget(self.percentile)
-        
+
+        flipX_layout = QHBoxLayout()
+        flipX_layout.addWidget(label_flipx)
+        flipX_layout.addWidget(self.flipX)
+
+        flipY_layout = QHBoxLayout()
+        flipY_layout.addWidget(label_flipy)
+        flipY_layout.addWidget(self.flipY)
+
+
         # Add Elements to Ui
         mainLayout.addLayout(a_layout)
         mainLayout.addLayout(b_layout)
@@ -83,6 +100,8 @@ class SideWindow(QWidget):
         mainLayout.addLayout(percentile_layout)
         mainLayout.addLayout(res_layout)
         mainLayout.addLayout(layout_colormap)
+        mainLayout.addLayout(flipX_layout)
+        mainLayout.addLayout(flipY_layout)
 
         # LineEdit Validators
         float_regex = QRegularExpression(r"^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$")
@@ -104,6 +123,8 @@ class SideWindow(QWidget):
         self.inverted.checkStateChanged.connect(lambda: self.update_frame())
         self.resolution.editingFinished.connect(lambda: self.update_frame())
         self.percentile.editingFinished.connect(lambda: self.update_frame())
+        self.flipX.checkStateChanged.connect(lambda _: self.update_frame())
+        self.flipY.checkStateChanged.connect(lambda _: self.update_frame())
 
     def save_frame(self):
         n = self.frame.n
@@ -140,7 +161,7 @@ class SideWindow(QWidget):
             index = max_index - 1
 
         self.colormap.setCurrentIndex(index)
-    
+
     def highResolutionRender(self):
         # render once in high resolution
         tmp_n = self.frame.n
@@ -185,6 +206,10 @@ class SideWindow(QWidget):
         except ValueError:
             return
         self.frame.render()
+        if self.flipX.isChecked():
+            self.frame.img = numpy.fliplr(self.frame.img)
+        if self.flipY.isChecked():
+            self.frame.img = numpy.flipud(self.frame.img)
 
     def updateUi(self):
         self.a.setText(str(self.frame.a))

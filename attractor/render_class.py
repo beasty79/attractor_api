@@ -6,6 +6,7 @@ from time import time
 import os
 from json import dump, dumps
 import numpy as np
+import cv2
 
 from attractor.config import Config
 from .file_writer import VideoFileWriter
@@ -16,6 +17,7 @@ from .utils import render_frame
 from .frame import Frame, SimonFrame
 from .colormap import ColorMap
 from .opts import Option
+from .alphaWriter import AlphaChannel
 
 
 class Performance_Renderer:
@@ -205,7 +207,8 @@ class Performance_Renderer:
                 colors=self.colormap, # type: ignore
                 n=n[i],
                 a=a[i],
-                b=b[i]
+                b=b[i],
+                alphaThreshold=self.opts.alphaThreshold
             )
             for i in range(len(res))
         ]
@@ -241,7 +244,8 @@ class Performance_Renderer:
             bypass_confirm: bool   = False,
             save_as_generic: bool  = False,
             use_counter: bool      = True,
-            save_render_information= False
+            save_render_information= False,
+            alpha: bool=True
         ):
         """starts the render Process
 
@@ -274,6 +278,11 @@ class Performance_Renderer:
             filename=fname_,
             fps=self.fps
         )
+        if alpha:
+            self.alphawriter = AlphaChannel(
+                filename=fname_.removesuffix(".mp4") + "_alpha.mp4",
+                fps=self.fps
+            )
         if save_render_information:
             self.save_metadata(fname_)
 
@@ -303,10 +312,16 @@ class Performance_Renderer:
                         continue
 
                     # write a, b
+                    img = frame.img
+                    if alpha:
+                        imgAlpha = img[:, :, 3]
+                        imgAlpha3 = cv2.merge([imgAlpha]*3)
+                        self.alphawriter.add_frame(imgAlpha3)
+
                     if verbose_image:
-                        self.writer.add_frame(frame.img, a=a[i], b=b[i])
+                        self.writer.add_frame(img, a=a[i], b=b[i])
                     else:
-                        self.writer.add_frame(frame.img)
+                        self.writer.add_frame(img)
         except Exception as e:
             raise e
 
@@ -317,3 +332,5 @@ class Performance_Renderer:
         print(f"Finished render process in {min_:02d}:{sec_:02d}")
         print(f"Average: {self.opts.frames / total:.2f} fps")
         self.writer.save()
+        if alpha:
+            self.alphawriter.save()
